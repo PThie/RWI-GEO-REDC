@@ -6,3 +6,9 @@ renv
 renv.lock
 run.R
 run.sh
+documentation
+.Rproj.user
+_targets/meta/meta
+_targets\.gitignore
+_targets/meta/meta
+RWI-GEO-REDC.Rproj
