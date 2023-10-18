@@ -14,6 +14,9 @@ read_org_data <- function(redc_raw_file = NA) {
         # here it is a string that could be anything
         # like a range "EG, 2. OG, 3. OG, 4. OG" or "Viergeschossig"
         # there are 1281 different values
+    # figure out whether some variables are unique to immobilientyp
+        # in RED data this is done in TypeMissings.ado (in 011_Aufbereitung_Individual.do)
+        # Guess: There no such variables
     
     #----------------------------------------------
     # read data
@@ -362,7 +365,7 @@ read_org_data <- function(redc_raw_file = NA) {
                 (immobilientyp == "Keine Angabe" |
                     immobilientyp == "keine Angabe" |
                     immobilientyp == "keine Angaben"
-                    ) ~ -7
+                    ) ~ -7,
                 TRUE ~ -9
             )
         )
@@ -396,7 +399,7 @@ read_org_data <- function(redc_raw_file = NA) {
             # different thresholds compared to below because there are some
             # large outliers that are clearly in "total-terms" and not "per
             # square meter"
-            nebenkosten_proqm <- dplyr::case_when(
+            nebenkosten_proqm = dplyr::case_when(
                 nebenkosten_proqm <= as.numeric(quantile(
                     nebenkosten_proqm[(nebenkosten_proqm != -9)], prob = 0.1, na.rm = TRUE)
                 ) ~ -5,
@@ -405,7 +408,7 @@ read_org_data <- function(redc_raw_file = NA) {
                 ) ~ -5,
                 TRUE ~ nebenkosten_proqm
             ),
-            miete_proqm <- dplyr::case_when(
+            miete_proqm = dplyr::case_when(
                 miete_proqm <= as.numeric(quantile(
                     miete_proqm[(miete_proqm != -9)], prob = 0.1, na.rm = TRUE)
                 ) ~ -5,
@@ -452,6 +455,11 @@ read_org_data <- function(redc_raw_file = NA) {
                 baujahr > max_year ~ -5,
                 is.na(baujahr) ~ -9,
                 TRUE ~ baujahr
+            ),
+            plz = dplyr::case_when(
+                # censor if zip code is not complete
+                nchar(plz) == 4 ~ "-9",
+                TRUE ~ plz
             )
         )
 
@@ -465,7 +473,18 @@ read_org_data <- function(redc_raw_file = NA) {
             kaufpreis = dplyr::case_when(
                 mietekalt == kaufpreis ~ -9,
                 TRUE ~ kaufpreis
-            )    
+            ),
+            # fix zip code
+            # for a few observations there is a "D-" in front of the zip code
+            # e.g. "D-58095"
+            plz = dplyr::case_when(
+                stringr::str_detect(plz, "D-") ~ stringr::str_replace_all(plz, "D-", ""),
+                TRUE ~ plz
+            )
+        ) |>
+        # renaming
+        dplyr::rename(
+            kreis = is24_stadt_kreis
         )
 
     #----------------------------------------------
@@ -556,6 +575,6 @@ read_org_data <- function(redc_raw_file = NA) {
 bla3 = data.table::fread(
     "M:/_FDZ/RWI-GEO/RWI-GEO-RED/daten/original/Lieferung_2306/RWI_ALL_202301bis202306.csv"
 )
-
+names(bla3)
 
 unique(bla3$Immobilientyp)
