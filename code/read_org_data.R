@@ -136,8 +136,12 @@ read_org_data <- function(redc_raw_file = NA) {
             "bauphase", # not applicable (only one value: "Keine Angabe")
             #----------------------------------------------
             # other
-            "objektkategorie2id" # removed because we already recode objektkategorie2
+            "objektkategorie2id", # removed because we already recode objektkategorie2
                 # which is already an ID
+            "is24_bezirk_gemeinde",
+            "is24_bundesland", # dropped in RED as well
+            "skid", # dropped in RED as well   
+            "bgid" # dropped in RED as well
         ))
 
     #----------------------------------------------
@@ -368,7 +372,9 @@ read_org_data <- function(redc_raw_file = NA) {
                     ) ~ -7,
                 TRUE ~ -9
             )
-        )
+        ) |>
+        # remove objektkategorie because its an integer in kategorie_business now
+        dplyr::select(-objektkategorie2)
 
     #----------------------------------------------
     # issue of rent
@@ -480,12 +486,10 @@ read_org_data <- function(redc_raw_file = NA) {
             plz = dplyr::case_when(
                 stringr::str_detect(plz, "D-") ~ stringr::str_replace_all(plz, "D-", ""),
                 TRUE ~ plz
-            )
-        ) |>
-        # renaming
-        dplyr::rename(
+            ),
+            # add kreis
             kreis = is24_stadt_kreis
-        )
+        ) 
 
     #----------------------------------------------
     # range check 
@@ -498,24 +502,50 @@ read_org_data <- function(redc_raw_file = NA) {
 
     #----------------------------------------------
     # setting correct types
+    # sometimes it is already correct by forcing it here again
 
+    # integer columns
+    int_cols <- c(
+        "obid", "version", "koid", "laid", "skid_id", "sc_id", contains("bef"),
+        "anbieter", "duplicateid", "nebenraeume", "letzte_modernisierung",
+        "baujahr", "blid", "immobilientyp", "objektzustand", "ausstattung",
+        "betreut", "heizungsart", "energieausweistyp", "energieeffizienzklasse",
+        "ejahr", "emonat", "ajahr", "amonat", "kategorie_business", 
+        "laufzeittage", "gkz", log_col
+    )
+
+    # numeric columns
+    num_cols <- c(
+        "grundstuecksflaeche", "nutzflaeche", "wohnflaeche", "zimmeranzahl",
+        "kaufpreis", "mietekalt", "nebenkosten", "geox", "geoy", "miete_proqm",                                 
+        "teilbar_ab", "nebenkosten_proqm", "ev_kennwert"
+    )
+
+    # character columns
+    char_cols <- c(
+        "freiab", "courtage", "mietekaution", "kreis", "plz", "ort",
+        "strasse", "hausnr",
+    )
+
+    # set types
     org_data_prep <- org_data_prep |>
         dplyr::mutate(
             dplyr::across(
-                .cols = c(
-                    "version",
-                    "blid",
-                    "immobilientyp",
-                    "betreut",
-                    "nebenraeume",
-                    "zimmeranzahl",
-                    "wohnflaeche",
-                    contains("bef")
-                ),
+                .cols = int_cols,
                 ~ as.integer(.x)
+            ),
+            dplyr::across(
+                .cols = num_cols,
+                ~ as.numeric(.x)
+            ),
+            dplyr::across(
+                .cols = char_cols,
+                ~ as.character(.x)
             )
         )
 
+    # CONTINUE: set missings according to type, create spell, fix etage,
+    # check that all variables are in right intervals
     #----------------------------------------------
     # replace missings
 
@@ -570,11 +600,3 @@ read_org_data <- function(redc_raw_file = NA) {
 
     return(org_data)
 }
-
-
-bla3 = data.table::fread(
-    "M:/_FDZ/RWI-GEO/RWI-GEO-RED/daten/original/Lieferung_2306/RWI_ALL_202301bis202306.csv"
-)
-names(bla3)
-
-unique(bla3$Immobilientyp)
