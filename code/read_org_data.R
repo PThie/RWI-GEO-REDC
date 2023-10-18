@@ -1,3 +1,561 @@
-read_org_data <- function() {
+read_org_data <- function(redc_raw_file = NA) {
+    #' @title
+    #' 
+    #' @description
+    #' 
+    #' @param current_delivery Current delivery of RED data
+    #' 
+    #' @return
+    #' @author Patrick Thiel
     
+    # TODO:
+    # handle "etage"
+        # in RED data its just a number
+        # here it is a string that could be anything
+        # like a range "EG, 2. OG, 3. OG, 4. OG" or "Viergeschossig"
+        # there are 1281 different values
+    
+    #----------------------------------------------
+    # read data
+    
+    org_data <- data.table::fread(
+        redc_raw_file,
+        encoding = "UTF-8"
+    )
+
+    #----------------------------------------------
+    # cleaning
+
+    # make all names lowercase
+    names(org_data) <- tolower(names(org_data))
+
+    # apply cleaning steps
+    org_data_prep <- org_data |>
+        dplyr::mutate(
+            #----------------------------------------------
+            # split date variable
+            # starting year and month
+            ajahr = as.numeric(substring(zeitraum, first = 1, last = 4)),
+            amonat = as.integer(substring(zeitraum, first = 5, last = 7)),
+            # end year and month
+            ejahr = as.numeric(substring(zeitraum, first = 12, last = 15)),
+            emonat = as.integer(substring(zeitraum, first = 16, last = 17)),
+            #----------------------------------------------
+            # fix housing type (remove Umlaute)
+            immobilientyp = stringi::stri_trans_general(immobilientyp, "de-ASCII; Latin-ASCII"),
+            # add separator for two-word types
+            immobilientyp = stringr::str_replace_all(immobilientyp, fixed(" "), "_"),
+            #----------------------------------------------
+            # fix anbietertyp (remove Umlaute)
+            anbietertyp = stringi::stri_trans_general(anbietertyp, "de-ASCII; Latin-ASCII"),
+            # redefine anbieter
+            anbieter = dplyr::case_when(
+                anbietertyp == "Privatanbieter" ~ 1,
+                anbietertyp == "Makler" ~ 2,
+                anbietertyp == "Wohnungswirtschaft" ~ 3,
+                anbietertyp == "Bautraeger" ~ 4,
+                anbietertyp == "Finanzsektor" ~ 5,
+                anbietertyp == "Gewerbeanbieter" ~ 6,
+                anbietertyp == "Hausbau" ~ 7,
+                anbietertyp == "Umzug" ~ 8,
+                anbietertyp == "unbekannt" ~ 9
+            ),
+            anbieter = as.integer(anbieter),
+            #----------------------------------------------
+            # fix objektkategorie2 (remove Umlaute)
+            objektkategorie2 = stringi::stri_trans_general(objektkategorie2, "de-ASCII; Latin-ASCII"),
+            #----------------------------------------------
+            # replace NAs in befeuerungsarten
+            befeuerungsarten = dplyr::case_when(
+                befeuerungsarten == "" ~ NA_character_,
+                TRUE ~ befeuerungsarten
+            ),
+            # generate bef1 which contains the firing type if there is only one
+            # given
+            bef1 = as.numeric(befeuerungsarten),
+            # generate help variable which is missing when bef1 has a value
+            bef_help = dplyr::case_when(
+                !is.na(bef1) ~ NA,
+                TRUE ~ befeuerungsarten
+            ),
+            # replace help variable with splitted values (by "|")
+            # output column will be of type list
+            bef_help = stringi::stri_split_fixed(bef_help, "|"),
+            # get the number of times "|" occured
+            bef_count = stringi::stri_count_fixed(befeuerungsarten, "|")
+        )|>
+        # split bef_help column into separate columns and generate new names
+        tidyr::unnest_wider(bef_help, names_sep = "_") |>
+        # set as dataframe
+        as.data.frame()
+
+    #----------------------------------------------
+    # rename columns "bef" (befeuerungsarten)
+
+    # get the max amount of potential splits based on delimiter "|"
+    max_split <- max(org_data_prep$bef_count, na.rm = TRUE)
+
+    # extract original names (names to leave unchanged)
+    org_names <- names(org_data_prep)[1:89]
+
+    # generate new names
+    # why plus 2: because we start at 2 (bef1 already exists) and the first
+    # split breaks into two pieces
+    new_names <- c()
+    for (i in seq(2, max_split + 2)) {
+        nam <- paste0("bef", i)
+        # update empty list of names
+        new_names <- c(new_names, nam)
+    }
+
+    # assign new names
+    names(org_data_prep) <- c(org_names, new_names, "bef_count")
+
+    #----------------------------------------------
+    # drop unnecessary columns
+
+    org_data_prep <- org_data_prep |>
+        dplyr::select(-c(
+            "bef_count",
+            "einstelldatum",
+            "befeuerungsarten",
+            "anbietertyp",
+            "zeitraum",
+            #----------------------------------------------
+            # text data
+            "objekt_beschreibung", # text description of the add removed for now
+            #----------------------------------------------
+            # variables that are 100% missing and variables that are probably
+                # not relevant for commercial data but are originally included
+                # because commercial and residential data comes as one data set
+            "haustier_erlaubt", # not applicable (only one value: "Keine Angabe")
+            "heizkosten_in_wm_enthalten", # not applicable (only one value: "null")
+            "bauphase", # not applicable (only one value: "Keine Angabe")
+            #----------------------------------------------
+            # other
+            "objektkategorie2id" # removed because we already recode objektkategorie2
+                # which is already an ID
+        ))
+
+    #----------------------------------------------
+    # calculate the number of missings per column
+
+    missings <- org_data_prep |>
+        # calculate the number of missings
+        dplyr::summarise_all(~ sum(is.na(.))) |>
+        # transpose to receive a column with missing count
+        t() |>
+        as.data.frame() |>
+        # rename variable
+        dplyr::rename(missings = V1) |>
+        # add percent missing
+        dplyr::mutate(
+            missings_perc = round((missings / nrow(org_data_prep)) * 100, digits = 3)
+        )
+
+    # assign rownames as variable names
+    missings$variables <- rownames(missings)
+    rownames(missings) <- seq(1, nrow(missings))
+
+    # get names of columns that are 100% missing
+    # but exclude firing type from selection
+    missing_cols <- missings |>
+        dplyr::filter(
+            missings_perc == 100 &
+            stringr::str_detect(variables, "bef") == FALSE
+        )
+
+    # remove columns
+    org_data_prep <- org_data_prep |>
+        dplyr::select(-unique(missing_cols$variables))
+
+    #----------------------------------------------
+    # recode Immo's missing observations (-1) to our missings (-9)
+
+    org_data_prep[org_data_prep == -1] <- -9
+
+    #----------------------------------------------
+    # fix dummy variables (Yes or No variables)
+
+    # retrieve logical variables
+    log_col <- c()
+    for (col in names(org_data_prep)) {
+        if(typeof(org_data_prep[[col]]) == "logical") {
+            log_col <- c(log_col, col)
+        }
+    }
+
+    # recode logical variables
+    org_data_prep <- org_data_prep |>
+        dplyr::mutate(
+            dplyr::across(
+                .cols = all_of(log_col),
+                ~ dplyr::case_when(
+                    .x == TRUE ~ 1,
+                    .x == FALSE ~ 0,
+                    .x == "nicht mehr existent" ~ -6,
+                    (.x == "Keine Angabe" | 
+                        .x == "keine Angabe" | 
+                        .x == "keine Angaben"
+                        ) ~ -7,
+                    TRUE ~ -9
+                )
+            )
+        )
+
+    #----------------------------------------------
+    # recode variables that are old variables (and not on Immo anymore)
+
+    org_data_prep <- org_data_prep |>
+        dplyr::mutate(
+            betreut = -6,
+            nebenraeume = -6
+        )
+
+    #----------------------------------------------
+    # recode categorical variables
+
+    org_data_prep <- org_data_prep |>
+        dplyr::rename(
+            ausstattung = ausstattungsqualitaet
+        ) |>
+        dplyr::mutate(
+            ausstattung = dplyr::case_when(
+                ausstattung == "Einfach" ~ 1,
+                ausstattung == "Normal" ~ 2,
+                ausstattung == "Gehoben" ~ 3,
+                ausstattung == "Luxus" ~ 4,
+                (ausstattung == "Keine Angabe" |
+                    ausstattung == "keine Angabe" |
+                    ausstattung == "keine Angaben"
+                    ) ~ -7,
+                TRUE ~ -9
+            ),
+            energieeffizienzklasse = dplyr::case_when(
+                energieeffizienzklasse == "A_PLUS" ~ 1,
+                energieeffizienzklasse == "A" ~ 2,
+                energieeffizienzklasse == "B" ~ 3,
+                energieeffizienzklasse == "C" ~ 4,
+                energieeffizienzklasse == "D" ~ 5,
+                energieeffizienzklasse == "E" ~ 6,
+                energieeffizienzklasse == "F" ~ 7,
+                energieeffizienzklasse == "G" ~ 8,
+                energieeffizienzklasse == "H" ~ 9,
+                (energieeffizienzklasse == "Keine Angabe" |
+                    energieeffizienzklasse == "keine Angabe" |
+                    energieeffizienzklasse == "keine Angaben"
+                    ) ~ -7,
+                TRUE ~ -9
+            ),
+            energieausweistyp = dplyr::case_when(
+                energieausweistyp == "Endenergiebedarf" ~ 1,
+                energieausweistyp == "Energieverbrauchskennwert" ~ 2,
+                (energieausweistyp == "Keine Angabe" |
+                    energieausweistyp == "keine Angabe" |
+                    energieausweistyp == "keine Angaben"
+                    ) ~ -7,
+                TRUE ~ -9
+            ),
+            heizungsart = dplyr::case_when(
+                heizungsart == "Blockheizkraftwerke" ~ 1,
+                heizungsart == "Elektro-Heizung" ~ 2,
+                heizungsart == "Etagenheizung" ~ 3,
+                heizungsart == "Fernwaerme" ~ 4,
+                heizungsart == "Fussbodenheizung" ~ 5,
+                heizungsart == "Gas-Heizung" ~ 6,
+                heizungsart == "Holz-Pelletheizung" ~ 7,
+                heizungsart == "Nachtspeicheroefen" ~ 8,
+                heizungsart == "Ofenheizung" ~ 9,
+                heizungsart == "Oel-Heizung" ~ 10,
+                heizungsart == "Solar-Heizung" ~ 11,
+                heizungsart == "Waermepumpe" ~ 12,
+                heizungsart == "Zentralheizung" ~ 13,
+                (heizungsart == "Keine Angabe" |
+                    heizungsart == "keine Angabe" |
+                    heizungsart == "keine Angaben"
+                    ) ~ -7,
+                TRUE ~ -9
+            ),
+            kategorie_business = dplyr::case_when(
+                objektkategorie2 == "Buero- und Geschaeftsgebaeude" ~ 1,    
+                objektkategorie2 == "Laden" ~ 2,                         
+                objektkategorie2 == "Wohn- und Geschaeftsgebaeude" ~ 3,  
+                objektkategorie2 == "Verkaufsflaeche" ~ 4,
+                objektkategorie2 == "Buerohaus" ~ 5,           
+                objektkategorie2 == "Bueroetage" ~ 6,                 
+                objektkategorie2 == "Spezialobjekt" ~ 7,                
+                objektkategorie2 == "Buerozentrum" ~ 8,                
+                objektkategorie2 == "Ausstellungsflaeche" ~ 9,            
+                objektkategorie2 == "Restaurant" ~ 10,       
+                objektkategorie2 == "Anwesen" ~ 11,              
+                objektkategorie2 == "Einkaufszentrum" ~ 12,              
+                objektkategorie2 == "Café" ~ 13,         
+                objektkategorie2 == "Gaestehaus" ~ 14,                  
+                objektkategorie2 == "Freizeitanlage" ~ 15,                
+                objektkategorie2 == "Gewerbezentrum" ~ 16,                
+                objektkategorie2 == "Hotel" ~ 17,                
+                objektkategorie2 == "Barbetrieb/Lounge" ~ 18,            
+                objektkategorie2 == "Reiterhof" ~ 19,                     
+                objektkategorie2 == "Lager mit Freiflaeche" ~ 20,          
+                objektkategorie2 == "Speditionslager" ~ 21,               
+                objektkategorie2 == "Hochregallager" ~ 22,                
+                objektkategorie2 == "Club/Diskothek" ~ 23,                
+                objektkategorie2 == "Kuehlhaus" ~ 24,                      
+                objektkategorie2 == "Kaufhaus" ~ 25,                      
+                objektkategorie2 == "Factory Outlet" ~ 26,                
+                objektkategorie2 == "Ferienbungalows" ~ 27,               
+                objektkategorie2 == "Praxis" ~ 28,
+                objektkategorie2 == "Buero" ~ 29,
+                objektkategorie2 == "Halle" ~ 30,
+                objektkategorie2 == "Industriehalle" ~ 31,
+                objektkategorie2 == "Buero-/ Lagergebaeude" ~ 32,
+                objektkategorie2 == "Gewerbeflaeche" ~ 33,
+                objektkategorie2 == "Lagerflaeche" ~ 34,
+                objektkategorie2 == "Lagerhalle" ~ 35,
+                objektkategorie2 == "Werkstatt" ~ 36,
+                objektkategorie2 == "Serviceflaeche" ~ 37,
+                objektkategorie2 == "Gaststaette" ~ 38,
+                objektkategorie2 == "Industriehalle mit Freiflaeche" ~ 39,
+                objektkategorie2 == "Loft" ~ 40,
+                objektkategorie2 == "SB-Markt" ~ 41,
+                objektkategorie2 == "Praxisetage" ~ 42,
+                objektkategorie2 == "Pension" ~ 43,
+                objektkategorie2 == "Atelier" ~ 44,
+                objektkategorie2 == "Verkaufshalle" ~ 45,
+                objektkategorie2 == "Praxishaus" ~ 46,
+                objektkategorie2 == "Kiosk" ~ 47,
+                objektkategorie2 == "Hotelanwesen" ~ 48,
+                objektkategorie2 == "Gewerbepark" ~ 49,
+                objektkategorie2 == "Bauernhof" ~ 50,
+                objektkategorie2 == "Hotel garni" ~ 51,
+                objektkategorie2 == "Kuehlregallager" ~ 52,
+                objektkategorie2 == "Weingut" ~ 53,
+                (objektkategorie2 == "Keine Angabe" |
+                    objektkategorie2 == "keine Angabe" |
+                    objektkategorie2 == "keine Angaben"
+                    ) ~ -7,
+                TRUE ~ -9
+            ),
+            objektzustand = dplyr::case_when(
+                objektzustand == "Erstbezug" ~ 1,
+                objektzustand == "Erstbezug nach Sanierung" ~ 2,
+                objektzustand == "Neuwertig" ~ 3,
+                objektzustand == "Saniert" ~ 4,
+                objektzustand == "Modernisiert" ~ 5,
+                objektzustand == "Vollstaendig Renoviert" ~ 6,
+                objektzustand == "Gepflegt" ~ 7,
+                objektzustand == "Renovierungsbeduerftig" ~ 8,
+                objektzustand == "Nach Vereinbarung" ~ 9,
+                objektzustand == "Abbruchreif" ~ 10,
+                (objektzustand == "Keine Angabe" |
+                    objektzustand == "keine Angabe" |
+                    objektzustand == "keine Angaben"
+                    ) ~ -7,
+                TRUE ~ -9
+            ),
+            immobilientyp = dplyr::case_when(
+                immobilientyp == "Buero_Praxis" ~ 1,
+                immobilientyp == "Einzelhandel" ~ 2,
+                immobilientyp == "Hallen_Produktion" ~ 3,
+                immobilientyp == "Spezialgewerbe" ~ 4,
+                immobilientyp == "Gastronomie_Hotel" ~ 5,
+                (immobilientyp == "Keine Angabe" |
+                    immobilientyp == "keine Angabe" |
+                    immobilientyp == "keine Angaben"
+                    ) ~ -7
+                TRUE ~ -9
+            )
+        )
+
+    #----------------------------------------------
+    # issue of rent
+    # explanation: for commercial data its possible to provide information
+    # as rent (mietekalt) + additional expenses (nebenkosten) or to provide
+    # rent per square meter (mieteproqm)
+    # if mieteproqm was select nebenkosten are also per square meter
+    # Potential source of error: User select the mieteproqm option but provide
+    # a monthly value
+    # See also Email Kehlert 01.08.2023 (store in documentation/infos/Lieferung_2023)
+
+    org_data_prep <- org_data_prep |>
+        dplyr::rename(
+            miete_proqm = mieteproqm
+        ) |>
+        dplyr::mutate(
+            # separate nebenkosten from nebenkosten per square meter if "per
+            # square meter" option is selected
+            nebenkosten_proqm = dplyr::case_when(
+                !is.na(miete_proqm) ~ nebenkosten,
+                TRUE ~ -9
+            ),
+            nebenkosten = dplyr::case_when(
+                !is.na(nebenkosten_proqm) ~ -9,
+                TRUE ~ nebenkosten
+            ), 
+            # censor implausible values for square meter variables
+            # different thresholds compared to below because there are some
+            # large outliers that are clearly in "total-terms" and not "per
+            # square meter"
+            nebenkosten_proqm <- dplyr::case_when(
+                nebenkosten_proqm <= as.numeric(quantile(
+                    nebenkosten_proqm[(nebenkosten_proqm != -9)], prob = 0.1, na.rm = TRUE)
+                ) ~ -5,
+                nebenkosten_proqm >= as.numeric(quantile(
+                    nebenkosten_proqm[(nebenkosten_proqm != -9)], prob = 0.95, na.rm = TRUE)
+                ) ~ -5,
+                TRUE ~ nebenkosten_proqm
+            ),
+            miete_proqm <- dplyr::case_when(
+                miete_proqm <= as.numeric(quantile(
+                    miete_proqm[(miete_proqm != -9)], prob = 0.1, na.rm = TRUE)
+                ) ~ -5,
+                miete_proqm >= as.numeric(quantile(
+                    miete_proqm[(miete_proqm != -9)], prob = 0.99, na.rm = TRUE)
+                ) ~ -5,
+                TRUE ~ miete_proqm
+            )
+        )
+
+    #----------------------------------------------
+    # censor implausible values
+
+    org_data_prep <- org_data_prep |>
+        dplyr::mutate(
+            dplyr::across(
+                .cols = c(
+                    "kaufpreis",
+                    "grundstuecksflaeche",
+                    "nutzflaeche",
+                    "ev_kennwert",
+                    "mietekalt",
+                    "nebenkosten"
+                ),
+                # dropping values below the 0.1 percentile and above the 99.9 percentile
+                ~ dplyr::case_when(
+                    .x <= as.numeric(quantile(.x[(.x != -9)], prob = 0.001, na.rm = TRUE)) ~ -5,
+                    .x >= as.numeric(quantile(.x[(.x != -9)], prob = 0.999, na.rm = TRUE)) ~ -5,
+                    TRUE ~ .x
+                )
+            ),
+            letzte_modernisierung = dplyr::case_when(
+                # censor if last renovation is in the future
+                letzte_modernisierung > max_year ~ -5,
+                # censor if last renovation is far back (before 1800)
+                letzte_modernisierung >= 0 & letzte_modernisierung < 1800 ~ -5,
+                is.na(letzte_modernisierung) ~ -9,
+                TRUE ~ letzte_modernisierung
+            ),
+            baujahr = dplyr::case_when(
+                # censor if construction year is far back (before 1000)
+                baujahr >= 0 & baujahr < 1000 ~ -5,
+                # censor if construction year is in the future
+                baujahr > max_year ~ -5,
+                is.na(baujahr) ~ -9,
+                TRUE ~ baujahr
+            )
+        )
+
+    #----------------------------------------------
+    # fix other things
+
+    org_data_prep <- org_data_prep |>
+        dplyr::mutate(
+            # in few cases there is a rent and a price given
+            # if they are equal its clearly a mistake (set to missing)
+            kaufpreis = dplyr::case_when(
+                mietekalt == kaufpreis ~ -9,
+                TRUE ~ kaufpreis
+            )    
+        )
+
+    #----------------------------------------------
+    # range check 
+
+    # check whether state numbers are between 1 and 16
+    tar_assert_true(
+        unique(unique(org_data_prep$blid) %in% seq(1, 16)),
+        msg = "State-ID (blid) is not within 1 to 16!"
+    )
+
+    #----------------------------------------------
+    # setting correct types
+
+    org_data_prep <- org_data_prep |>
+        dplyr::mutate(
+            dplyr::across(
+                .cols = c(
+                    "version",
+                    "blid",
+                    "immobilientyp",
+                    "betreut",
+                    "nebenraeume",
+                    "zimmeranzahl",
+                    "wohnflaeche",
+                    contains("bef")
+                ),
+                ~ as.integer(.x)
+            )
+        )
+
+    #----------------------------------------------
+    # replace missings
+
+    # retrieve character variables
+    char_col <- c()
+    for (col in names(org_data_prep)) {
+        if(typeof(org_data_prep[[col]]) == "character") {
+            char_col <- c(char_col, col)
+        }
+    }
+
+    # apply fixes
+    org_data_prep <- org_data_prep |>
+        dplyr::mutate(
+            # for numerical values
+            dplyr::across(
+                .cols = c(
+                    "blid",
+                    contains("bef")
+                ),
+                ~ dplyr::case_when(
+                    is.na(.x) ~ -9,
+                    TRUE ~ .x
+                )
+            ),
+            # for characters
+            dplyr::across(
+                .cols = all_of(char_col),
+                ~ dplyr::case_when(
+                    .x == "" ~ "-9",
+                    TRUE ~ .x
+                )
+            )
+        )
+
+    #----------------------------------------------
+    # export
+
+    data.table::fwrite(
+        org_data_prep,
+        file.path(
+            data_path,
+            "processed",
+            current_version,
+            "clean_data.csv"
+        ),
+        na = NA,
+        sep = ";"
+    )
+
+    #----------------------------------------------
+
+    return(org_data)
 }
+
+
+bla3 = data.table::fread(
+    "M:/_FDZ/RWI-GEO/RWI-GEO-RED/daten/original/Lieferung_2306/RWI_ALL_202301bis202306.csv"
+)
+
+
+unique(bla3$Immobilientyp)
