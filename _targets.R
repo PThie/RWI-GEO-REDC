@@ -22,9 +22,11 @@ suppressPackageStartupMessages({
     library(rlang)
     library(qs)
     library(docstring)
+    library(cli)
 
     # used during execution of pipeline
     library(stringr)
+    library(stringi)
     library(dplyr)
     library(tidyr)
     library(data.table)
@@ -91,12 +93,61 @@ lapply(
 #----------------------------------------------
 # globals
 
+# define current delivery
+current_delivery <- "Lieferung_2306"
+
+# current version of REDC
+current_version <- "v1"
+
+# maximum year in the current delivery
+max_year <- 2023
+
+#----------------------------------------------
+# folder generation for new delivery (in data folder)
+
+for (data_folder in c("on-site", "processed", "SUF")) {
+    ifelse(
+        !dir.exists(
+            file.path(
+                data_path,
+                data_folder,
+                current_version
+            )
+        ),
+        yes = dir.create(
+            file.path(
+                data_path,
+                data_folder,
+                current_version
+            )
+        ),
+        # TODO: Fix that cli prints the ID as well
+        no = print(
+            cli::cli_alert_success(
+                col_green(
+                    "Version directory for \"{data_folder}\" data folder already exists."    
+                )
+            )
+        )
+    )
+}
+
 #----------------------------------------------
 
 targets_preparation <- rlang::list2(
-    tar_target(
-        reading_org_data,
-        read_org_data()
+    tar_file_read(
+        org_data,
+        # path to original data (automatically paste into read sfunction)
+        file.path(
+            data_path,
+            "original",
+            current_delivery,
+            "commercial_data_all.csv"
+        ),
+        # actual reading
+        read_org_data(
+            !!.x
+        )
     )
 )
 
@@ -104,5 +155,5 @@ targets_preparation <- rlang::list2(
 # combine all target branches
 
 rlang::list2(
-
+    targets_preparation
 )
