@@ -1,22 +1,13 @@
 read_org_data <- function(redc_raw_file = NA) {
-    #' @title
+    #' @title Reading original data
     #' 
-    #' @description
+    #' @description This function reads the raw data and performs first
+    #' cleaning steps. Many steps are similar to the parent data set RWI-GEO-RED.
     #' 
-    #' @param current_delivery Current delivery of RED data
+    #' @param redc_raw_file File path to raw/ original data
     #' 
-    #' @return
+    #' @return DataFrame
     #' @author Patrick Thiel
-    
-    # TODO:
-    # handle "etage"
-        # in RED data its just a number
-        # here it is a string that could be anything
-        # like a range "EG, 2. OG, 3. OG, 4. OG" or "Viergeschossig"
-        # there are 1281 different values
-    # figure out whether some variables are unique to immobilientyp
-        # in RED data this is done in TypeMissings.ado (in 011_Aufbereitung_Individual.do)
-        # Guess: There no such variables
     
     #----------------------------------------------
     # read data
@@ -138,7 +129,7 @@ read_org_data <- function(redc_raw_file = NA) {
             # other
             "objektkategorie2id", # removed because we already recode objektkategorie2
                 # which is already an ID
-            "is24_bezirk_gemeinde",
+            "is24_bezirk_gemeinde", # dropped in RED as well
             "is24_bundesland", # dropped in RED as well
             "skid", # dropped in RED as well   
             "bgid" # dropped in RED as well
@@ -398,7 +389,7 @@ read_org_data <- function(redc_raw_file = NA) {
                 TRUE ~ -9
             ),
             nebenkosten = dplyr::case_when(
-                !is.na(nebenkosten_proqm) ~ -9,
+                !is.na(miete_proqm) ~ -9,
                 TRUE ~ nebenkosten
             ), 
             # censor implausible values for square meter variables
@@ -437,6 +428,8 @@ read_org_data <- function(redc_raw_file = NA) {
                     "nutzflaeche",
                     "ev_kennwert",
                     "mietekalt",
+                    "nebenkosten",
+                    "teilbar_ab",
                     "nebenkosten"
                 ),
                 # dropping values below the 0.1 percentile and above the 99.9 percentile
@@ -488,17 +481,116 @@ read_org_data <- function(redc_raw_file = NA) {
                 TRUE ~ plz
             ),
             # add kreis
-            kreis = is24_stadt_kreis
+            kreis = stringi::stri_trans_general(is24_stadt_kreis, "de-ASCII; Latin-ASCII"),
+            # remove Umlaute
+            dplyr::across(
+                .cols = c("freiab", "strasse", "courtage", "mietekaution"),
+                ~ stringi::stri_trans_general(.x, "de-ASCII; Latin-ASCII")
+            )
         ) 
 
     #----------------------------------------------
-    # range check 
+    # generate spell
 
-    # check whether state numbers are between 1 and 16
-    tar_assert_true(
-        unique(unique(org_data_prep$blid) %in% seq(1, 16)),
-        msg = "State-ID (blid) is not within 1 to 16!"
-    )
+    org_data_prep <- org_data_prep |>
+        # sort by obid and timing
+        dplyr::arrange(obid, ajahr, amonat, ejahr, emonat) |>
+        # after sorting stay within the obid (i.e. grouped)
+        dplyr::group_by(obid)  |>
+        # generate counting variable for group
+        dplyr::mutate(
+            spell = seq(1, n())
+        ) |>
+        # ungroup to prevent potential issues in further steps
+        dplyr::ungroup()
+
+    #----------------------------------------------
+    # fix etage
+    # problem: sometimes there is a specific number given but sometimes
+    # there is also a range given
+    # fix the specific numbers (i.e. where it is clear which floor) but
+    # keep the ranges (researcher has to decide what this should be)
+
+    org_data_prep <- org_data_prep |>
+        dplyr::mutate(
+            # replace some common strings
+            # this helps with the next step to turn them into numbers
+            etage = dplyr::case_when(
+                stringr::str_detect(etage, ". UG") ~ 
+                    stringr::str_replace_all(etage, ". UG", ""),
+                stringr::str_detect(etage,".OG") ~
+                    stringr::str_replace_all(etage, ".OG", ""),
+                stringr::str_detect(etage, ". OG") ~
+                    stringr::str_replace_all(etage, ". OG", ""),
+                stringr::str_detect(etage, " OG") ~
+                    stringr::str_replace_all(etage, " OG", ""),
+                stringr::str_detect(etage, ". Obergeschoss") ~
+                    stringr::str_replace_all(etage, ". Obergeschoss", ""),
+                stringr::str_detect(etage, ". Obergeschoss") ~
+                    stringr::str_replace_all(etage, ".Obergeschoss", ""),
+                stringr::str_detect(etage, ",00") ~
+                    stringr::str_replace_all(etage, ",00", ""),
+                stringr::str_detect(etage, ". links") ~
+                    stringr::str_replace_all(etage, ". links", ""),
+                stringr::str_detect(etage, ". rechts") ~
+                    stringr::str_replace_all(etage, ". rechts", ""),
+                stringr::str_detect(etage, ". Ebene") ~
+                    stringr::str_replace_all(etage, ". Ebene", ""),
+                stringr::str_detect(etage, " Etage") ~
+                    stringr::str_replace_all(etage, " Etage", ""),
+                stringr::str_detect(etage, " rechts") ~
+                    stringr::str_replace_all(etage, " rechts", ""),
+                stringr::str_detect(etage, " Stock") ~
+                    stringr::str_replace_all(etage, " Stock", ""),
+                stringr::str_detect(etage, " links") ~
+                    stringr::str_replace_all(etage, " links", ""),
+                etage == "*" ~ NA,
+                TRUE ~ etage
+            ),
+            # turn into numbers
+            etage_clean = as.numeric(etage),
+            # fix some special cases
+            etage_clean = dplyr::case_when(
+                (etage == "UG" |
+                    etage == "Keller" |
+                    etage == "Untergeschoss"
+                    ) ~ -1,
+                (etage == "Erdgeschoss" | 
+                    etage == "EG" |
+                    etage == "EG " | 
+                    etage == "Erdgeschoß" |
+                    etage == "EG." |
+                    etage == "ebenerdig" |
+                    etage == "Erdgeschos" |
+                    etage == "Erdgeschossß" |
+                    etage == "Ebenerdig" |
+                    etage == "Erd"
+                    ) ~ 0,
+                (etage == "1. Etage" |
+                    etage == "OG"
+                    ) ~ 1,
+                (etage == "II." |
+                    etage == "II"
+                    ) ~ 2,
+                TRUE ~ etage_clean
+            ),
+            # replace etage with NA with clean value could have been identified
+            etage = dplyr::case_when(
+                !is.na(etage_clean) ~ NA,
+                etage == "" ~ NA,
+                TRUE ~ etage
+            ),
+            # bring both columns together
+            # assuming that the rest could not have been cleaned (since
+            # mostly there is a range given; the researcher has to decide
+            # what to do with that)
+            etage = dplyr::case_when(
+                !is.na(etage_clean) ~ as.character(etage_clean),
+                TRUE ~ etage
+            )
+        ) |>
+        # remove helper variable
+        dplyr::select(-etage_clean)
 
     #----------------------------------------------
     # setting correct types
@@ -506,12 +598,12 @@ read_org_data <- function(redc_raw_file = NA) {
 
     # integer columns
     int_cols <- c(
-        "obid", "version", "koid", "laid", "skid_id", "sc_id", contains("bef"),
+        "obid", "version", "koid", "laid", "skid_id", "sc_id",
         "anbieter", "duplicateid", "nebenraeume", "letzte_modernisierung",
         "baujahr", "blid", "immobilientyp", "objektzustand", "ausstattung",
         "betreut", "heizungsart", "energieausweistyp", "energieeffizienzklasse",
         "ejahr", "emonat", "ajahr", "amonat", "kategorie_business", 
-        "laufzeittage", "gkz", log_col
+        "laufzeittage", "gkz"
     )
 
     # numeric columns
@@ -524,14 +616,14 @@ read_org_data <- function(redc_raw_file = NA) {
     # character columns
     char_cols <- c(
         "freiab", "courtage", "mietekaution", "kreis", "plz", "ort",
-        "strasse", "hausnr",
+        "strasse", "hausnr"
     )
 
     # set types
     org_data_prep <- org_data_prep |>
         dplyr::mutate(
             dplyr::across(
-                .cols = int_cols,
+                .cols = c(int_cols, contains("bef"), log_col),
                 ~ as.integer(.x)
             ),
             dplyr::across(
@@ -544,42 +636,24 @@ read_org_data <- function(redc_raw_file = NA) {
             )
         )
 
-    # CONTINUE: set missings according to type, create spell, fix etage,
-    # check that all variables are in right intervals
     #----------------------------------------------
-    # replace missings
+    # replace missings according to type
 
-    # retrieve character variables
-    char_col <- c()
-    for (col in names(org_data_prep)) {
-        if(typeof(org_data_prep[[col]]) == "character") {
-            char_col <- c(char_col, col)
-        }
-    }
-
-    # apply fixes
     org_data_prep <- org_data_prep |>
-        dplyr::mutate(
-            # for numerical values
-            dplyr::across(
-                .cols = c(
-                    "blid",
-                    contains("bef")
-                ),
-                ~ dplyr::case_when(
-                    is.na(.x) ~ -9,
-                    TRUE ~ .x
-                )
-            ),
-            # for characters
-            dplyr::across(
-                .cols = all_of(char_col),
-                ~ dplyr::case_when(
-                    .x == "" ~ "-9",
-                    TRUE ~ .x
-                )
-            )
-        )
+        dplyr::mutate_if(is.integer, replace_na, replace = -9) |>
+        dplyr::mutate_if(is.numeric, replace_na, replace = -9)  |>
+        dplyr::mutate_if(is.character, replace_na, replace = "-9")
+
+    as.data.frame(summary(org_data_prep))
+
+    #----------------------------------------------
+    # range check 
+
+    # check whether state numbers are between 1 and 16
+    tar_assert_true(
+        unique(unique(org_data_prep$blid) %in% seq(1, 16)),
+        msg = "State-ID (blid) is not within 1 to 16!"
+    )
 
     #----------------------------------------------
     # export
