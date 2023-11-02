@@ -11,8 +11,18 @@ pipeline_library <- c(
     "MetBrewer" # colors
 )
 
+# install.packages(
+#     c(
+#         "targets", "tarchetypes", "future", "future.callr",
+#         "fst", "renv", "rlang", "qs", "docstring", "cli",
+#         "stringr", "stringi", "dplyr", "tidyr", "data.table",
+#         "sf", "openxlsx", "ggplot2", "MetBrewer", "here"
+#     )
+# )
+
 suppressPackageStartupMessages({
     # used during setup of pipeline
+    library(here)
     library(targets)
     library(tarchetypes)
     library(future)
@@ -52,7 +62,7 @@ tar_option_set(
 #----------------------------------------------
 # working directory
 
-main_path <- "M:/_FDZ/RWI-GEO/RWI-GEO-REDC/"
+main_path <- here()
 setwd(main_path)
 
 #----------------------------------------------
@@ -121,12 +131,9 @@ for (data_folder in c("on-site", "processed", "SUF")) {
                 current_version
             )
         ),
-        # TODO: Fix that cli prints the ID as well
-        no = print(
-            cli::cli_alert_success(
-                col_green(
-                    "Version directory for \"{data_folder}\" data folder already exists."    
-                )
+        no = cli::cli_alert_success(
+            col_green(
+                "Version directory for \"{data_folder}\" data folder already exists."    
             )
         )
     )
@@ -145,8 +152,12 @@ targets_preparation <- rlang::list2(
             "commercial_data_all.csv"
         ),
         # actual reading
-        read_org_data(
-            !!.x
+        # suppress warnings because conversion of characters to numeric
+        # generates warnings
+        suppressWarnings(
+            read_org_data(
+                !!.x
+            )
         )
     )
 )
