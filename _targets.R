@@ -159,6 +159,10 @@ targets_preparation <- rlang::list2(
                 !!.x
             )
         )
+    ),
+    tar_target(
+        org_data_geo,
+        georeferencing(org_data = org_data)
     )
 )
 
