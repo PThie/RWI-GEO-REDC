@@ -206,27 +206,33 @@ georeferencing <- function(org_data = org_data) {
     )
 
     # add districts
-    org_data_sf <- sf::st_join(
-        org_data_sf,
-        KRS_2019,
-        left = TRUE,
-        largest = TRUE
+    suppressWarnings(
+        org_data_sf <- sf::st_join(
+            org_data_sf,
+            KRS_2019,
+            left = TRUE,
+            largest = TRUE
+        )
     )
 
     # add municipalities
-    org_data_sf <- sf::st_join(
-        org_data_sf,
-        GEM_2019,
-        left = TRUE,
-        largest = TRUE
+    suppressWarnings(
+        org_data_sf <- sf::st_join(
+            org_data_sf,
+            GEM_2019,
+            left = TRUE,
+            largest = TRUE
+        )
     )
 
     # add grid
-    org_data_sf <- sf::st_join(
-        org_data_sf,
-        grids,
-        left = TRUE,
-        largest = TRUE
+    suppressWarnings(
+        org_data_sf <- sf::st_join(
+            org_data_sf,
+            grids,
+            left = TRUE,
+            largest = TRUE
+        )
     )
 
     # drop geometry
