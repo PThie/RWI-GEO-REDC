@@ -62,29 +62,18 @@ tar_option_set(
 #----------------------------------------------
 # working directory
 
-main_path <- here()
-setwd(main_path)
+setwd(here())
 
 #----------------------------------------------
-# paths
+# load configurations
 
-output_path <- file.path(
-    main_path,
-    "output"
-)
-
-data_path <- file.path(
-    main_path,
-    "data"
-)
-
-code_path <- file.path(
-    main_path,
-    "code"
-)
-
-gebiete_path <- file.path(
-    "M:/_FDZ/interne Daten/Gebietseinheit"
+source(
+    file.path(
+        here(),
+        "code",
+        "helpers",
+        "config.R"
+    )
 )
 
 #----------------------------------------------
@@ -92,7 +81,7 @@ gebiete_path <- file.path(
 
 lapply(
     list.files(
-        file.path(main_path, "code"),
+        paths()[["code_path"]],
         pattern = ".R$",
         full.names = TRUE,
         all.files = FALSE
@@ -116,37 +105,62 @@ max_year <- 2023
 # folder generation for new delivery (in data folder)
 
 for (data_folder in c("on-site", "processed", "SUF")) {
-    ifelse(
-        !dir.exists(
-            file.path(
-                data_path,
-                data_folder,
-                current_version
-            )
-        ),
-        yes = dir.create(
-            file.path(
-                data_path,
-                data_folder,
-                current_version
-            )
-        ),
-        no = cli::cli_alert_success(
-            col_green(
-                "Version directory for \"{data_folder}\" data folder already exists."    
+    if (data_folder == "processed") {
+        ifelse(
+            !dir.exists(
+                file.path(
+                    data_path,
+                    data_folder,
+                    current_delivery
+                )
+            ),
+            yes = dir.create(
+                file.path(
+                    data_path,
+                    data_folder,
+                    current_delivery
+                )
+            ),
+            no = cli::cli_alert_success(
+                col_green(
+                    "Version directory for \"{data_folder}\" data folder already exists."    
+                )
             )
         )
-    )
+    } else {
+        ifelse(
+            !dir.exists(
+                file.path(
+                    data_path,
+                    data_folder,
+                    current_version
+                )
+            ),
+            yes = dir.create(
+                file.path(
+                    data_path,
+                    data_folder,
+                    current_version
+                )
+            ),
+            no = cli::cli_alert_success(
+                col_green(
+                    "Version directory for \"{data_folder}\" data folder already exists."    
+                )
+            )
+        )
+    }
 }
 
 #----------------------------------------------
+# Preparation of the original data
 
 targets_preparation <- rlang::list2(
     tar_file_read(
         org_data,
         # path to original data (automatically paste into read sfunction)
         file.path(
-            data_path,
+            paths()[["data_path"]],
             "original",
             current_delivery,
             "commercial_data_all.csv"
@@ -162,7 +176,9 @@ targets_preparation <- rlang::list2(
     ),
     tar_target(
         org_data_geo,
-        georeferencing(org_data = org_data)
+        georeferencing(
+            org_data = org_data
+        )
     )
 )
 
