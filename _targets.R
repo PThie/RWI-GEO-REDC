@@ -81,25 +81,13 @@ source(
 
 lapply(
     list.files(
-        paths()[["code_path"]],
+        config_paths()[["code_path"]],
         pattern = ".R$",
         full.names = TRUE,
         all.files = FALSE
     ),
     source
 )
-
-#----------------------------------------------
-# globals
-
-# define current delivery
-current_delivery <- "Lieferung_2312"
-
-# current version of REDC
-current_version <- "v1"
-
-# maximum year in the current delivery
-max_year <- 2023
 
 #----------------------------------------------
 # folder generation for new delivery (in data folder)
@@ -109,16 +97,16 @@ for (data_folder in c("on-site", "processed", "SUF")) {
         ifelse(
             !dir.exists(
                 file.path(
-                    paths()[["data_path"]],
+                    config_paths()[["data_path"]],
                     data_folder,
-                    current_delivery
+                    config_globals()[["current_delivery"]]
                 )
             ),
             yes = dir.create(
                 file.path(
-                    paths()[["data_path"]],
+                    config_paths()[["data_path"]],
                     data_folder,
-                    current_delivery
+                    config_globals()[["current_delivery"]]
                 )
             ),
             no = cli::cli_alert_success(
@@ -131,16 +119,16 @@ for (data_folder in c("on-site", "processed", "SUF")) {
         ifelse(
             !dir.exists(
                 file.path(
-                    paths()[["data_path"]],
+                    config_paths()[["data_path"]],
                     data_folder,
-                    current_version
+                    config_globals()[["current_version"]]
                 )
             ),
             yes = dir.create(
                 file.path(
-                    paths()[["data_path"]],
+                    config_paths()[["data_path"]],
                     data_folder,
-                    current_version
+                    config_globals()[["current_version"]]
                 )
             ),
             no = cli::cli_alert_success(
@@ -160,7 +148,7 @@ targets_files <- rlang::list2(
     tar_target(
         file_naming,
         make_consistent_file_naming(
-            current_delivery = current_delivery
+            current_delivery = config_globals()[["current_delivery"]]
         )
     )
 )
@@ -173,9 +161,9 @@ targets_preparation <- rlang::list2(
         org_data,
         # path to original data (automatically paste into read sfunction)
         file.path(
-            paths()[["data_path"]],
+            config_paths()[["data_path"]],
             "original",
-            current_delivery,
+            config_globals()[["current_delivery"]],
             "commercial_data_all.csv"
         ),
         # actual reading
