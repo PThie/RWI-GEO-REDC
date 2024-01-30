@@ -36,8 +36,10 @@ georeferencing <- function(org_data = org_data) {
         # read data
         dta <- sf::st_read(
             file.path(
-                gebiete_path,
-                disgem, year, paste0("VG250_", abb, ".shp")
+                paths()[["gebiete_path"]],
+                disgem,
+                year,
+                paste0("VG250_", abb, ".shp")
             ),
             quiet = TRUE
         ) |>
@@ -91,8 +93,9 @@ georeferencing <- function(org_data = org_data) {
     # load data
     grids <- sf::st_read(
         file.path(
-            gebiete_path,
-            "Raster/grids_BRD.shp"
+            paths()[["gebiete_path"]],
+            "Raster",
+            "grids_BRD.shp"
         ),
         quiet = TRUE
     ) |>
@@ -108,9 +111,6 @@ georeferencing <- function(org_data = org_data) {
             as.character
         )
 
-    # rename
-    #names(G_1km)[names(G_1km) == "idm"] <- "idm_grid"
-
     # transform 
     grids <- sf::st_transform(
         grids,
@@ -119,10 +119,6 @@ georeferencing <- function(org_data = org_data) {
 
     #----------------------------------------------
     # transform the coordinate system of the Immo data
-
-    # store the coordinates in a separate data frame
-    # coordinates <- org_data |>
-    #     dplyr::select(obid, spell, geox, geoy)
 
     # this is the projection Immoscout uses
     projection_immo <- "+proj=lcc +lat_1=40 +lat_2=60 +lat_0=30 +lon_0=10 +x_0=0 +y_0=0 +datum=WGS84 +units=m +no_defs"
@@ -268,9 +264,9 @@ georeferencing <- function(org_data = org_data) {
     data.table::fwrite(
         org_data_prep,
         file.path(
-            data_path,
+            paths()[["data_path"]],
             "processed",
-            current_version,
+            current_delivery,
             "clean_data_georeferenced.csv"
         ),
         na = NA,
