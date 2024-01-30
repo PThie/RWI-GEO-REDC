@@ -93,7 +93,7 @@ lapply(
 # globals
 
 # define current delivery
-current_delivery <- "Lieferung_2306"
+current_delivery <- "Lieferung_2312"
 
 # current version of REDC
 current_version <- "v1"
@@ -109,14 +109,14 @@ for (data_folder in c("on-site", "processed", "SUF")) {
         ifelse(
             !dir.exists(
                 file.path(
-                    data_path,
+                    paths()[["data_path"]],
                     data_folder,
                     current_delivery
                 )
             ),
             yes = dir.create(
                 file.path(
-                    data_path,
+                    paths()[["data_path"]],
                     data_folder,
                     current_delivery
                 )
@@ -131,14 +131,14 @@ for (data_folder in c("on-site", "processed", "SUF")) {
         ifelse(
             !dir.exists(
                 file.path(
-                    data_path,
+                    paths()[["data_path"]],
                     data_folder,
                     current_version
                 )
             ),
             yes = dir.create(
                 file.path(
-                    data_path,
+                    paths()[["data_path"]],
                     data_folder,
                     current_version
                 )
