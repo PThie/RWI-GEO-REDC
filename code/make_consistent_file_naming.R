@@ -12,14 +12,14 @@ make_consistent_file_naming <- function(current_delivery = NA) {
     #----------------------------------------------
     # special handling of delivery 2312 since it includes all past data (2010 to
     # 2022)
-    
+
     if (current_delivery == "Lieferung_2312") {
         # list all folders
         file_list <- list.files(
             file.path(
-                paths()[["data_path"]],
+                config_paths()[["data_path"]],
                 "original",
-                current_delivery
+                config_globals()[["current_delivery"]]
             ),
             pattern = "*.csv$"
         )
@@ -31,30 +31,33 @@ make_consistent_file_naming <- function(current_delivery = NA) {
         for (file in file_list) {
             dta <- data.table::fread(
                 file.path(
-                    paths()[["data_path"]],
+                    config_paths()[["data_path"]],
                     "original",
-                    current_delivery,
+                    config_globals()[["current_delivery"]],
                     file,
                     file
                 )
             )
 
+            # set date as character
+            dta$Einstelldatum <- as.character(dta$Einstelldatum)
+
             data_storage[[file]] <- dta
         }
-
+    
         # combine all files
         all_data <- data.table::rbindlist(
             data_storage,
             fill = TRUE
         )
-    
+
         # export
         data.table::fwrite(
             all_data,
             file.path(
-                paths()[["data_path"]],
+                config_paths()[["data_path"]],
                 "original",
-                current_delivery,
+                config_globals()[["current_delivery"]],
                 "commercial_data_all.csv"
             )
         )
