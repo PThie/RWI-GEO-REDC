@@ -661,9 +661,9 @@ read_org_data <- function(redc_raw_file = NA) {
     data.table::fwrite(
         org_data_prep,
         file.path(
-            data_path,
+            paths()[["data_path"]],
             "processed",
-            current_version,
+            current_delivery,
             "clean_data.csv"
         ),
         na = NA,
