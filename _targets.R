@@ -153,6 +153,19 @@ for (data_folder in c("on-site", "processed", "SUF")) {
 }
 
 #----------------------------------------------
+# Prepare original files for further processing
+# Adjust the file naming
+
+targets_files <- rlang::list2(
+    tar_target(
+        file_naming,
+        make_consistent_file_naming(
+            current_delivery = current_delivery
+        )
+    )
+)
+
+#----------------------------------------------
 # Preparation of the original data
 
 targets_preparation <- rlang::list2(
@@ -186,5 +199,6 @@ targets_preparation <- rlang::list2(
 # combine all target branches
 
 rlang::list2(
-    targets_preparation
+    targets_files,
+    #targets_preparation
 )
