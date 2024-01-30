@@ -111,7 +111,7 @@ for (data_folder in c("on-site", "processed", "SUF")) {
             ),
             no = cli::cli_alert_success(
                 col_green(
-                    "Version directory for \"{data_folder}\" data folder already exists."    
+                    "Delivery directory for \"{data_folder}\" data folder already exists."    
                 )
             )
         )
