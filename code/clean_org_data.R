@@ -1,22 +1,16 @@
-clean_org_data <- function(redc_raw_file = NA) {
-    #' @title Reading original data
+clean_org_data <- function(org_data = NA, current_delivery = NA, max_year = NA) {
+    #' @title Cleaning original data
     #' 
-    #' @description This function reads the raw data and performs first
-    #' cleaning steps. Many steps are similar to the parent data set RWI-GEO-RED.
+    #' @description This function performs first cleaning steps. 
+    #' Many steps are similar to the parent data set RWI-GEO-RED.
     #' 
-    #' @param redc_raw_file File path to raw/ original data
+    #' @param org_data Raw original data
+    #' @param current_delivery The current delivery.
+    #' @param max_year The maximum year in the current delivery.
     #' 
     #' @return DataFrame
     #' @author Patrick Thiel
     
-    #----------------------------------------------
-    # read data
-    
-    org_data <- data.table::fread(
-        redc_raw_file,
-        encoding = "UTF-8"
-    )
-
     #----------------------------------------------
     # cleaning
 
