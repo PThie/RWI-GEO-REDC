@@ -704,7 +704,7 @@ clean_org_data <- function(org_data = NA, current_delivery = NA, max_year = NA) 
     fst::write.fst(
         org_data_prep,
         file.path(
-            paths()[["data_path"]],
+            config_paths()[["data_path"]],
             "processed",
             current_delivery,
             "clean_data.fst"
