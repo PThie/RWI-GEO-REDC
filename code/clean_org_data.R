@@ -1,4 +1,4 @@
-read_org_data <- function(redc_raw_file = NA) {
+clean_org_data <- function(redc_raw_file = NA) {
     #' @title Reading original data
     #' 
     #' @description This function reads the raw data and performs first
@@ -23,9 +23,34 @@ read_org_data <- function(redc_raw_file = NA) {
     # make all names lowercase
     names(org_data) <- tolower(names(org_data))
 
+    if (current_delivery == "Lieferung_2312") {
+        # delivery 2312 has two variables referencing the energy class
+        # merge both
+        org_data <- org_data |>
+            dplyr::mutate(
+                energieeffizienzklasse = dplyr::case_when(
+                    energieeffizienzklasse == "" ~ NA_character_,
+                    TRUE ~ energieeffizienzklasse
+                ),
+                energieeffizienz_klasse = dplyr::case_when(
+                    energieeffizienz_klasse == "" ~ NA_character_,
+                    TRUE ~ energieeffizienz_klasse
+                ),
+                energieeffizienzklasse := data.table::fcoalesce(
+                    energieeffizienzklasse,
+                    energieeffizienz_klasse
+                ),
+                energieeffizienz_klasse = NULL
+            )
+    }
+
     # apply cleaning steps
     org_data_prep <- org_data |>
         dplyr::mutate(
+            #----------------------------------------------
+            # add current version and delivery (more for internal documentation)
+            #redc_version = config_globals()[["current_version"]],
+            #redc_delivery = config_globals()[["current_delivery"]],
             #----------------------------------------------
             # split date variable
             # starting year and month
@@ -76,7 +101,27 @@ read_org_data <- function(redc_raw_file = NA) {
             # output column will be of type list
             bef_help = stringi::stri_split_fixed(bef_help, "|"),
             # get the number of times "|" occured
-            bef_count = stringi::stri_count_fixed(befeuerungsarten, "|")
+            bef_count = stringi::stri_count_fixed(befeuerungsarten, "|"),
+            #----------------------------------------------
+            # bauphase
+            bauphase = dplyr::case_when(
+                bauphase == "Keine Angabe" ~ "-7",
+                TRUE ~ bauphase
+            ),
+            #----------------------------------------------
+            # pets
+            haustier_erlaubt = dplyr::case_when(
+                haustier_erlaubt == "Keine Angabe" ~ "-7",
+                TRUE ~ haustier_erlaubt
+            ),
+            #----------------------------------------------
+            # heating costs in rent
+            heizkosten_in_wm_enthalten = dplyr::case_when(
+                heizkosten_in_wm_enthalten == "null" ~ "-7",
+                heizkosten_in_wm_enthalten == "true" ~ "1",
+                heizkosten_in_wm_enthalten == "false" ~ "0",
+                TRUE ~ heizkosten_in_wm_enthalten
+            )
         )|>
         # split bef_help column into separate columns and generate new names
         tidyr::unnest_wider(bef_help, names_sep = "_") |>
@@ -90,7 +135,10 @@ read_org_data <- function(redc_raw_file = NA) {
     max_split <- max(org_data_prep$bef_count, na.rm = TRUE)
 
     # extract original names (names to leave unchanged)
-    org_names <- names(org_data_prep)[1:89]
+    # exception of bef1
+    org_names <- org_data_prep |>
+        dplyr::select(!contains("bef_help") & !contains("bef_count")) |>
+        names()
 
     # generate new names
     # why plus 2: because we start at 2 (bef1 already exists) and the first
@@ -110,21 +158,14 @@ read_org_data <- function(redc_raw_file = NA) {
 
     org_data_prep <- org_data_prep |>
         dplyr::select(-c(
-            "bef_count",
-            "einstelldatum",
-            "befeuerungsarten",
-            "anbietertyp",
-            "zeitraum",
+            "einstelldatum", # not needed
+            "bef_count", # auxiliary variable from previous step
+            "befeuerungsarten", # transformed to bef1, bef2, ...
+            "anbietertyp", # tranformed to anbieter
+            "zeitraum", # transformed to ajahr, amonat, ejahr, emonat
             #----------------------------------------------
             # text data
             "objekt_beschreibung", # text description of the add removed for now
-            #----------------------------------------------
-            # variables that are 100% missing and variables that are probably
-                # not relevant for commercial data but are originally included
-                # because commercial and residential data comes as one data set
-            "haustier_erlaubt", # not applicable (only one value: "Keine Angabe")
-            "heizkosten_in_wm_enthalten", # not applicable (only one value: "null")
-            "bauphase", # not applicable (only one value: "Keine Angabe")
             #----------------------------------------------
             # other
             "objektkategorie2id", # removed because we already recode objektkategorie2
@@ -134,6 +175,14 @@ read_org_data <- function(redc_raw_file = NA) {
             "skid", # dropped in RED as well   
             "bgid" # dropped in RED as well
         ))
+
+    #----------------------------------------------
+    # variables that are potentially in the data set because the data were
+    # delivered with the residential data together
+    # remove those variables
+
+    org_data_prep <- org_data_prep |>
+        dplyr::select(-all_of(config_delete_variables()))
 
     #----------------------------------------------
     # calculate the number of missings per column
@@ -658,16 +707,14 @@ read_org_data <- function(redc_raw_file = NA) {
     #----------------------------------------------
     # export
 
-    data.table::fwrite(
+    fst::write.fst(
         org_data_prep,
         file.path(
             paths()[["data_path"]],
             "processed",
             current_delivery,
-            "clean_data.csv"
-        ),
-        na = NA,
-        sep = ";"
+            "clean_data.fst"
+        )
     )
 
     #----------------------------------------------
