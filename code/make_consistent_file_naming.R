@@ -19,7 +19,7 @@ make_consistent_file_naming <- function(current_delivery = NA) {
             file.path(
                 config_paths()[["data_path"]],
                 "original",
-                config_globals()[["current_delivery"]]
+                current_delivery
             ),
             pattern = "*.csv$"
         )
@@ -33,7 +33,7 @@ make_consistent_file_naming <- function(current_delivery = NA) {
                 file.path(
                     config_paths()[["data_path"]],
                     "original",
-                    config_globals()[["current_delivery"]],
+                    current_delivery,
                     file,
                     file
                 )
@@ -57,10 +57,13 @@ make_consistent_file_naming <- function(current_delivery = NA) {
             file.path(
                 config_paths()[["data_path"]],
                 "original",
-                config_globals()[["current_delivery"]],
+                current_delivery,
                 "commercial_data_all.csv"
             )
         )
+    } else {
+        # TODO-NEW-DELIVERY: Add here code for new delivery depending how the
+        # original files are named
     }
 
     #----------------------------------------------
