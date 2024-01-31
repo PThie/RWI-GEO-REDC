@@ -66,6 +66,8 @@ setwd(here())
 
 #----------------------------------------------
 # load configurations
+# TODO-NEW-DELIVERY: Adjust the globals to new delivery
+# TODO-NEW-DELIVERY: Check if list of variables to be removed is still correct
 
 source(
     file.path(
@@ -141,8 +143,18 @@ for (data_folder in c("on-site", "processed", "SUF")) {
 }
 
 #----------------------------------------------
+# MAYBE DELETE LATER
+# define column names from previous deliveries
+# NOTE: even though this is define in config as global, I am loading it here
+# as global to avoid reading the data set in the config specification over and
+# over again. This saves runtime.
+
+#----------------------------------------------
 # Prepare original files for further processing
 # Adjust the file naming
+# NOTE: This step is only needed for the new delivery since the past deliveries
+# already have been cleaned.
+# TODO-NEW-DELIVERY: Adjust the file naming in else clause
 
 targets_files <- rlang::list2(
     tar_target(
@@ -154,9 +166,9 @@ targets_files <- rlang::list2(
 )
 
 #----------------------------------------------
-# Preparation of the original data
+# read original data
 
-targets_preparation <- rlang::list2(
+targets_reading <- rlang::list2(
     tar_file_read(
         org_data,
         # path to original data (automatically paste into read sfunction)
@@ -167,20 +179,58 @@ targets_preparation <- rlang::list2(
             "commercial_data_all.csv"
         ),
         # actual reading
-        # suppress warnings because conversion of characters to numeric
-        # generates warnings
         suppressWarnings(
             read_org_data(
                 !!.x
             )
         )
-    ),
-    tar_target(
-        org_data_geo,
-        georeferencing(
-            org_data = org_data
-        )
     )
+)
+
+#----------------------------------------------
+# Preparation of the original data
+# NOTE: This step is only needed for the new delivery since the past deliveries
+# already have been cleaned.
+
+targets_preparation <- rlang::list2(
+    # NOTE: if the pipeline stops due to inconsistent variables, make the appropriate
+    # changes in read_org_data.R and when done add the variable to the list of
+    # fixed variables in testing_consistent_variables.R
+    tar_target(
+        consistent_variables,
+        testing_consistent_variables(
+            current_delivery = config_globals()[["current_delivery"]]
+        )
+    ),
+    tar_fst(
+        org_data_cleaned,
+        # suppress warnings because conversion of characters to numeric
+        # generates warnings
+        suppressWarnings(
+            clean_org_data(
+                org_data = org_data,
+                current_delivery = config_globals()[["current_delivery"]],
+                max_year = config_globals()[["max_year"]]
+            )
+        )
+    ),
+    # tar_target(
+    #     org_data_geo,
+    #     georeferencing(
+    #         org_data = org_data
+    #     )
+    # )
+)
+
+#----------------------------------------------
+# Unit testing
+# TODO: entire block
+
+targets_unit_testing <- rlang::list2(
+    # check that all variables have the right type
+
+    # check that all variables are in reasonable ranges
+    # compare to previous delivery
 )
 
 #----------------------------------------------
@@ -188,5 +238,6 @@ targets_preparation <- rlang::list2(
 
 rlang::list2(
     targets_files,
-    #targets_preparation
+    targets_reading,
+    targets_preparation
 )
