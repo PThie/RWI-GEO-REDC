@@ -179,38 +179,6 @@ clean_org_data <- function(org_data = NA, current_delivery = NA, max_year = NA) 
         dplyr::select(-all_of(config_delete_variables()))
 
     #----------------------------------------------
-    # calculate the number of missings per column
-
-    missings <- org_data_prep |>
-        # calculate the number of missings
-        dplyr::summarise_all(~ sum(is.na(.))) |>
-        # transpose to receive a column with missing count
-        t() |>
-        as.data.frame() |>
-        # rename variable
-        dplyr::rename(missings = V1) |>
-        # add percent missing
-        dplyr::mutate(
-            missings_perc = round((missings / nrow(org_data_prep)) * 100, digits = 3)
-        )
-
-    # assign rownames as variable names
-    missings$variables <- rownames(missings)
-    rownames(missings) <- seq(1, nrow(missings))
-
-    # get names of columns that are 100% missing
-    # but exclude firing type from selection
-    missing_cols <- missings |>
-        dplyr::filter(
-            missings_perc == 100 &
-            stringr::str_detect(variables, "bef") == FALSE
-        )
-
-    # remove columns
-    org_data_prep <- org_data_prep |>
-        dplyr::select(-unique(missing_cols$variables))
-
-    #----------------------------------------------
     # recode Immo's missing observations (-1) to our missings (-9)
 
     org_data_prep[org_data_prep == -1] <- -9
