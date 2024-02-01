@@ -24,6 +24,9 @@ make_consistent_file_naming <- function(current_delivery = NA) {
             pattern = "*.csv$"
         )
 
+        # exclude the combined files
+        file_list <- file_list[!file_list %in% c("commercial_data_all.csv", "commercial_data_all_short_for_naming.csv")]
+
         # data storage
         data_storage <- list()
 
