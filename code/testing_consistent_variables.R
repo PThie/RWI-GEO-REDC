@@ -1,10 +1,13 @@
-testing_consistent_variables <- function(current_delivery = NA) {
+testing_consistent_variables <- function(org_data = NA, current_delivery = NA) {
     #' @title Testing consistent variables
+    #' 
+    #' @param org_data Raw original data
+    #' @param current_delivery The current delivery.
     #' 
     #' @description This file tests if the variables are consistent with the
     #' variables from previous years.
     #' 
-    #' @return NULL
+    #' @return Dataframe with original data where missing columns have been added
     #' @author Patrick Thiel
     
     #----------------------------------------------
@@ -20,16 +23,6 @@ testing_consistent_variables <- function(current_delivery = NA) {
     )
 
     #----------------------------------------------
-    # check if all variables are consistent with previous years
-
-    # tar_assert_true(
-    #     all(
-    #         names(org_data) == config_variable_list()
-    #     ),
-    #     msg = "The variables are not consistent with previous years."
-    # )
-
-    #----------------------------------------------
     # print differences
 
     fix_columns <- c()
@@ -42,8 +35,11 @@ testing_consistent_variables <- function(current_delivery = NA) {
                     col
                 )
             )
-
+            # store the variable that needs to be fixed
             fix_columns <- c(fix_columns, col)
+
+            # update org data
+            org_data[[col]] <- NA
         }
     }
 
@@ -58,5 +54,5 @@ testing_consistent_variables <- function(current_delivery = NA) {
     #----------------------------------------------
     # return
 
-    return(NULL)
+    return(org_data)
 }
