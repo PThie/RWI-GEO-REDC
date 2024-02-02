@@ -197,8 +197,9 @@ targets_preparation <- rlang::list2(
     # changes in read_org_data.R and when done add the variable to the list of
     # fixed variables in testing_consistent_variables.R
     tar_target(
-        consistent_variables,
+        org_data_expanded,
         testing_consistent_variables(
+            org_data = org_data,
             current_delivery = config_globals()[["current_delivery"]]
         )
     ),
@@ -208,7 +209,7 @@ targets_preparation <- rlang::list2(
         # generates warnings
         suppressWarnings(
             clean_org_data(
-                org_data = org_data,
+                org_data_expanded = org_data_expanded,
                 current_delivery = config_globals()[["current_delivery"]],
                 max_year = config_globals()[["max_year"]]
             )
@@ -237,7 +238,7 @@ targets_unit_testing <- rlang::list2(
 # combine all target branches
 
 rlang::list2(
-    targets_files,
+    # targets_files,
     targets_reading,
     targets_preparation
 )
