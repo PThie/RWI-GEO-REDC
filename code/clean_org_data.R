@@ -664,15 +664,6 @@ clean_org_data <- function(org_data_expanded = NA, current_delivery = NA, max_ye
         dplyr::mutate_if(is.character, replace_na, replace = "-9")
 
     #----------------------------------------------
-    # range check 
-
-    # check whether state numbers are between 1 and 16
-    tar_assert_true(
-        unique(unique(org_data_prep$blid) %in% seq(1, 16)),
-        msg = "State-ID (blid) is not within 1 to 16!"
-    )
-
-    #----------------------------------------------
     # export
 
     fst::write.fst(
