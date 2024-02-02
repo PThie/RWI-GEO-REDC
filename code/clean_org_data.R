@@ -1,10 +1,10 @@
-clean_org_data <- function(org_data = NA, current_delivery = NA, max_year = NA) {
+clean_org_data <- function(org_data_expanded = NA, current_delivery = NA, max_year = NA) {
     #' @title Cleaning original data
     #' 
     #' @description This function performs first cleaning steps. 
     #' Many steps are similar to the parent data set RWI-GEO-RED.
     #' 
-    #' @param org_data Raw original data
+    #' @param org_data_expanded Raw original data where missing columns have been added
     #' @param current_delivery The current delivery.
     #' @param max_year The maximum year in the current delivery.
     #' 
@@ -15,36 +15,15 @@ clean_org_data <- function(org_data = NA, current_delivery = NA, max_year = NA) 
     # cleaning
 
     # make all names lowercase
-    names(org_data) <- tolower(names(org_data))
-
-    if (current_delivery == "Lieferung_2312") {
-        # delivery 2312 has two variables referencing the energy class
-        # merge both
-        org_data <- org_data |>
-            dplyr::mutate(
-                energieeffizienzklasse = dplyr::case_when(
-                    energieeffizienzklasse == "" ~ NA_character_,
-                    TRUE ~ energieeffizienzklasse
-                ),
-                energieeffizienz_klasse = dplyr::case_when(
-                    energieeffizienz_klasse == "" ~ NA_character_,
-                    TRUE ~ energieeffizienz_klasse
-                ),
-                energieeffizienzklasse := data.table::fcoalesce(
-                    energieeffizienzklasse,
-                    energieeffizienz_klasse
-                ),
-                energieeffizienz_klasse = NULL
-            )
-    }
+    names(org_data_expanded) <- tolower(names(org_data_expanded))
 
     # apply cleaning steps
-    org_data_prep <- org_data |>
+    org_data_prep <- org_data_expanded |>
         dplyr::mutate(
             #----------------------------------------------
             # add current version and delivery (more for internal documentation)
-            #redc_version = config_globals()[["current_version"]],
-            #redc_delivery = config_globals()[["current_delivery"]],
+            redc_version = config_globals()[["current_version"]],
+            redc_delivery = config_globals()[["current_delivery"]],
             #----------------------------------------------
             # split date variable
             # starting year and month
@@ -53,6 +32,22 @@ clean_org_data <- function(org_data = NA, current_delivery = NA, max_year = NA) 
             # end year and month
             ejahr = as.numeric(substring(zeitraum, first = 12, last = 15)),
             emonat = as.integer(substring(zeitraum, first = 16, last = 17)),
+            #----------------------------------------------
+            # delivery 2312 has two variables referencing the energy class
+            # merge both
+            energieeffizienzklasse = dplyr::case_when(
+                energieeffizienzklasse == "" ~ NA_character_,
+                TRUE ~ energieeffizienzklasse
+            ),
+            energieeffizienz_klasse = dplyr::case_when(
+                energieeffizienz_klasse == "" ~ NA_character_,
+                TRUE ~ energieeffizienz_klasse
+            ),
+            energieeffizienzklasse := data.table::fcoalesce(
+                energieeffizienzklasse,
+                energieeffizienz_klasse
+            ),
+            energieeffizienz_klasse = NULL,
             #----------------------------------------------
             # fix housing type (remove Umlaute)
             immobilientyp = stringi::stri_trans_general(immobilientyp, "de-ASCII; Latin-ASCII"),
@@ -158,16 +153,9 @@ clean_org_data <- function(org_data = NA, current_delivery = NA, max_year = NA) 
             "anbietertyp", # tranformed to anbieter
             "zeitraum", # transformed to ajahr, amonat, ejahr, emonat
             #----------------------------------------------
-            # text data
-            "objekt_beschreibung", # text description of the add removed for now
-            #----------------------------------------------
             # other
             "objektkategorie2id", # removed because we already recode objektkategorie2
                 # which is already an ID
-            "is24_bezirk_gemeinde", # dropped in RED as well
-            "is24_bundesland", # dropped in RED as well
-            "skid", # dropped in RED as well   
-            "bgid" # dropped in RED as well
         ))
 
     #----------------------------------------------
@@ -430,19 +418,26 @@ clean_org_data <- function(org_data = NA, current_delivery = NA, max_year = NA) 
     #----------------------------------------------
     # censor implausible values
 
+    cols <- c(
+        "kaufpreis",
+        "grundstuecksflaeche",
+        "nutzflaeche",
+        "ev_kennwert",
+        "mietekalt",
+        "nebenkosten",
+        "teilbar_ab",
+        "nebenkosten"
+    )
+
     org_data_prep <- org_data_prep |>
         dplyr::mutate(
+            # make sure that the variables are numeric
             dplyr::across(
-                .cols = c(
-                    "kaufpreis",
-                    "grundstuecksflaeche",
-                    "nutzflaeche",
-                    "ev_kennwert",
-                    "mietekalt",
-                    "nebenkosten",
-                    "teilbar_ab",
-                    "nebenkosten"
-                ),
+                .cols = cols,
+                ~ as.numeric(.x)
+            ),
+            dplyr::across(
+                .cols = cols,
                 # dropping values below the 0.1 percentile and above the 99.9 percentile
                 ~ dplyr::case_when(
                     .x <= as.numeric(quantile(.x[(.x != -9)], prob = 0.001, na.rm = TRUE)) ~ -5,
@@ -491,8 +486,6 @@ clean_org_data <- function(org_data = NA, current_delivery = NA, max_year = NA) 
                 stringr::str_detect(plz, "D-") ~ stringr::str_replace_all(plz, "D-", ""),
                 TRUE ~ plz
             ),
-            # add kreis
-            kreis = stringi::stri_trans_general(is24_stadt_kreis, "de-ASCII; Latin-ASCII"),
             # remove Umlaute
             dplyr::across(
                 .cols = c("freiab", "strasse", "courtage", "mietekaution"),
@@ -606,46 +599,61 @@ clean_org_data <- function(org_data = NA, current_delivery = NA, max_year = NA) 
     #----------------------------------------------
     # setting correct types
     # sometimes it is already correct by forcing it here again
+    # TODO: Define scenario if column is not existent create the column and assign -9
 
     # integer columns
+    bef_cols <- org_data_prep |>
+        dplyr::select(starts_with("bef")) |>
+        names()
+    
     int_cols <- c(
         "obid", "version", "koid", "laid", "skid_id", "sc_id",
         "anbieter", "duplicateid", "nebenraeume", "letzte_modernisierung",
         "baujahr", "blid", "immobilientyp", "objektzustand", "ausstattung",
         "betreut", "heizungsart", "energieausweistyp", "energieeffizienzklasse",
         "ejahr", "emonat", "ajahr", "amonat", "kategorie_business", 
-        "laufzeittage", "gkz"
+        "laufzeittage", "gkz", "heizkosten_in_wm_enthalten", "spell",
+        "bauphase", "kaufvermietet", "haustier_erlaubt", bef_cols
     )
 
     # numeric columns
     num_cols <- c(
         "grundstuecksflaeche", "nutzflaeche", "wohnflaeche", "zimmeranzahl",
         "kaufpreis", "mietekalt", "nebenkosten", "geox", "geoy", "miete_proqm",                                 
-        "teilbar_ab", "nebenkosten_proqm", "ev_kennwert"
+        "teilbar_ab", "nebenkosten_proqm", "ev_kennwert", "heizkosten",
+        "mietewarm", "hits", "click_schnellkontakte", "liste_show", "liste_match",
+        "click_weitersagen", "click_url"  
     )
 
     # character columns
     char_cols <- c(
         "freiab", "courtage", "mietekaution", "kreis", "plz", "ort",
-        "strasse", "hausnr"
+        "strasse", "hausnr", "redc_version", "redc_delivery", "etage"
     )
 
-    # set types
-    org_data_prep <- org_data_prep |>
-        dplyr::mutate(
-            dplyr::across(
-                .cols = c(int_cols, contains("bef"), log_col),
-                ~ as.integer(.x)
-            ),
-            dplyr::across(
-                .cols = num_cols,
-                ~ as.numeric(.x)
-            ),
-            dplyr::across(
-                .cols = char_cols,
-                ~ as.character(.x)
-            )
-        )
+    for (col in int_cols) {
+        if (col %in% names(org_data_prep)) {
+            org_data_prep[[col]] <- as.integer(org_data_prep[[col]])
+        } else {
+            org_data_prep[[col]] <- -9
+        }
+    }
+
+    for (col in num_cols) {
+        if (col %in% names(org_data_prep)) {
+            org_data_prep[[col]] <- as.numeric(org_data_prep[[col]])
+        } else {
+            org_data_prep[[col]] <- -9
+        }
+    }
+
+    for (col in char_cols) {
+        if (col %in% names(org_data_prep)) {
+            org_data_prep[[col]] <- as.character(org_data_prep[[col]])
+        } else {
+            org_data_prep[[col]] <- "-9"
+        }
+    }
 
     #----------------------------------------------
     # replace missings according to type
@@ -654,8 +662,6 @@ clean_org_data <- function(org_data = NA, current_delivery = NA, max_year = NA) 
         dplyr::mutate_if(is.integer, replace_na, replace = -9) |>
         dplyr::mutate_if(is.numeric, replace_na, replace = -9)  |>
         dplyr::mutate_if(is.character, replace_na, replace = "-9")
-
-    as.data.frame(summary(org_data_prep))
 
     #----------------------------------------------
     # range check 
