@@ -13,7 +13,7 @@ clean_org_data <- function(org_data_expanded = NA, current_delivery = NA, max_ye
     
     #----------------------------------------------
     # cleaning
-
+    
     # make all names lowercase
     names(org_data_expanded) <- tolower(names(org_data_expanded))
 
@@ -80,7 +80,14 @@ clean_org_data <- function(org_data_expanded = NA, current_delivery = NA, max_ye
             ),
             # generate bef1 which contains the firing type if there is only one
             # given
-            bef1 = as.numeric(befeuerungsarten),
+            # NOTE: cannot be done in one step because of the warning issue
+            # "insert NAs because of coercion to numeric" which crashes the
+            # pipeline
+            bef1 = dplyr::case_when(
+                str_detect(befeuerungsarten, "|") ~ NA_character_,
+                TRUE ~ befeuerungsarten
+            ),
+            bef1 = as.numeric(bef1),
             # generate help variable which is missing when bef1 has a value
             bef_help = dplyr::case_when(
                 !is.na(bef1) ~ NA,
@@ -111,7 +118,7 @@ clean_org_data <- function(org_data_expanded = NA, current_delivery = NA, max_ye
                 heizkosten_in_wm_enthalten == "false" ~ "0",
                 TRUE ~ heizkosten_in_wm_enthalten
             )
-        )|>
+        ) |>
         # split bef_help column into separate columns and generate new names
         tidyr::unnest_wider(bef_help, names_sep = "_") |>
         # set as dataframe
@@ -154,8 +161,7 @@ clean_org_data <- function(org_data_expanded = NA, current_delivery = NA, max_ye
             "zeitraum", # transformed to ajahr, amonat, ejahr, emonat
             #----------------------------------------------
             # other
-            "objektkategorie2id", # removed because we already recode objektkategorie2
-                # which is already an ID
+            "objektkategorie2id", # removed because recode objektkategorie2
         ))
 
     #----------------------------------------------
@@ -163,8 +169,11 @@ clean_org_data <- function(org_data_expanded = NA, current_delivery = NA, max_ye
     # delivered with the residential data together
     # remove those variables
 
-    org_data_prep <- org_data_prep |>
-        dplyr::select(-all_of(config_delete_variables()))
+    for (var in config_delete_variables()) {
+        if (var %in% names(org_data_prep)) {
+            org_data_prep[[var]] <- NULL
+        }
+    }
 
     #----------------------------------------------
     # recode Immo's missing observations (-1) to our missings (-9)
@@ -514,7 +523,6 @@ clean_org_data <- function(org_data_expanded = NA, current_delivery = NA, max_ye
     # there is also a range given
     # fix the specific numbers (i.e. where it is clear which floor) but
     # keep the ranges (researcher has to decide what this should be)
-
     org_data_prep <- org_data_prep |>
         dplyr::mutate(
             # replace some common strings
@@ -599,7 +607,6 @@ clean_org_data <- function(org_data_expanded = NA, current_delivery = NA, max_ye
     #----------------------------------------------
     # setting correct types
     # sometimes it is already correct by forcing it here again
-    # TODO: Define scenario if column is not existent create the column and assign -9
 
     # integer columns
     bef_cols <- org_data_prep |>
@@ -627,7 +634,7 @@ clean_org_data <- function(org_data_expanded = NA, current_delivery = NA, max_ye
 
     # character columns
     char_cols <- c(
-        "freiab", "courtage", "mietekaution", "kreis", "plz", "ort",
+        "freiab", "courtage", "mietekaution", "plz", "ort",
         "strasse", "hausnr", "redc_version", "redc_delivery", "etage"
     )
 
@@ -677,6 +684,7 @@ clean_org_data <- function(org_data_expanded = NA, current_delivery = NA, max_ye
     )
 
     #----------------------------------------------
+    # return
 
     return(org_data_prep)
 }
