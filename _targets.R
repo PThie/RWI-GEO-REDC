@@ -218,7 +218,7 @@ targets_preparation <- rlang::list2(
     # tar_target(
     #     org_data_geo,
     #     georeferencing(
-    #         org_data = org_data
+    #         org_data_cleaned = org_data_cleaned
     #     )
     # )
 )
