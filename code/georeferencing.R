@@ -26,45 +26,64 @@ georeferencing <- function(org_data_cleaned = org_data_cleaned) {
     #----------------------------------------------
     # function for reading data
 
-    read_geo_data <- function(disgem = c("Kreis", "Gemeinde"), year = 2019, ags_name) {
+    read_geo_data <- function(
+        disgem = c("Kreis", "Gemeinde", "PLZ"),
+        year = 2019,
+        ags_name = NA,
+        gen_name = NA
+    ) {
         #' @title Read in district shape data
         #' 
         #' @param disgem Indicator for district or municipality data
         #' @param year Year of district shape data
         #' @param ags_name How AGS should be renamed after reading
+        #' @param gen_name How GEN should be renamed after reading
         
         #----------------------------------------------
         # abbreviation for district or municipality
-        if(disgem == "Kreis") {
-            abb <- "KRS"
+        if (disgem == "Kreis") {
+            filename <- "VG250_KRS"
+            region <- disgem
+        } else if (disgem == "Gemeinde") {
+            filename <- "VG250_GEM"
+            region <- disgem
         } else {
-            abb <- "GEM"
+            filename <- "PLZ"
+            region <- "Postleitzahl"
         }
 
         # read data
         dta <- sf::st_read(
             file.path(
                 config_paths()[["gebiete_path"]],
-                disgem,
+                region,
                 year,
-                paste0("VG250_", abb, ".shp")
+                paste0(filename, ".shp")
             ),
             quiet = TRUE
-        ) |>
-        # keep only AGS and geometry columns
-        dplyr::select(
-            AGS, GEN, geometry
         )
+
+        if (disgem != "PLZ") {
+            dta <- dta |>
+                # keep only AGS and geometry columns
+                dplyr::select(
+                    AGS, GEN, geometry
+                ) |>
+                # rename AGS
+                dplyr::rename(
+                    !!rlang::sym(ags_name) := AGS,
+                    !!rlang::sym(gen_name) := GEN
+                )
+        } else {
+            dta <- dta |>
+                dplyr::rename(
+                    !!rlang::sym(ags_name) := PLZ
+                )
+        }
 
         # convert factors
         dta |>
             dplyr::mutate_if(is.factor, as.character) -> dta
-
-        # rename AGS
-        dta <- dta |>
-            dplyr::rename(
-                !!rlang::sym(ags_name) := AGS
-            )
 
         # transform to UTM
         dta <- sf::st_transform(
@@ -73,6 +92,7 @@ georeferencing <- function(org_data_cleaned = org_data_cleaned) {
         )
 
         #----------------------------------------------
+        # return output
 
         return(dta)
     }
@@ -84,7 +104,8 @@ georeferencing <- function(org_data_cleaned = org_data_cleaned) {
     KRS_2019 <- read_geo_data(
         disgem = "Kreis",
         year = 2019,
-        ags_name = "kid2019"
+        ags_name = "kid2019",
+        gen_name = "kname2019"
     )
 
     #----------------------------------------------
@@ -93,7 +114,17 @@ georeferencing <- function(org_data_cleaned = org_data_cleaned) {
     GEM_2019 <- read_geo_data(
         disgem = "Gemeinde",
         year = 2019,
-        ags_name = "gid2019"
+        ags_name = "gid2019",
+        gen_name = "gname2019"
+    )
+
+    #----------------------------------------------
+    # zipcode data
+
+    PLZ_2019 <- read_geo_data(
+        disgem = "PLZ",
+        year = 2019,
+        ags_name = "plz2019"
     )
 
     #----------------------------------------------
@@ -274,6 +305,9 @@ georeferencing <- function(org_data_cleaned = org_data_cleaned) {
             )
         ) |>
         dplyr::select(-idm)
+
+    #----------------------------------------------
+    # fill blid and zipcodes
 
     #----------------------------------------------
     # export
