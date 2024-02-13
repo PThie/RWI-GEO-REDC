@@ -1,25 +1,33 @@
-georeferencing <- function(org_data = org_data) {
+georeferencing <- function(org_data_cleaned = org_data_cleaned) {
     #' @title Geocoding the RED observations
     #' 
     #' @description This function transforms the giving reference system into the
     #' standard reference systems of GPS and UTM.
     #' 
-    #' @param org_data Prepared original data
+    #' @param org_data_cleaned Prepared original data
     #' 
     #' @return DataFrame
     #' @author Patrick Thiel
+    #TODO: add state ID if not already in the code
+    # TODO: Remove GKZ
+    # TODO: Use geocoordinate to find all geographical units and if no geo coordinate
+    # is found, use Immo info (like GKZ, PLZ, Kreis) to fill in blanks (drop Immo variables afterwards)
+    org_data_cleaned = read.fst(
+        file.path(
+            config_paths()[["data_path"]],
+            "processed",
+            "Lieferung_2306",
+            "clean_data.fst"
+        )
+    )
+
+    names(org_data_cleaned)
     
-    #----------------------------------------------
-    # globals
-
-    utmcrs <- 25832
-    gpscrs <- 4326
-
     #----------------------------------------------
     # function for reading data
 
     read_geo_data <- function(disgem = c("Kreis", "Gemeinde"), year = 2019, ags_name) {
-        #' Read in district shape data
+        #' @title Read in district shape data
         #' 
         #' @param disgem Indicator for district or municipality data
         #' @param year Year of district shape data
@@ -36,7 +44,7 @@ georeferencing <- function(org_data = org_data) {
         # read data
         dta <- sf::st_read(
             file.path(
-                paths()[["gebiete_path"]],
+                config_paths()[["gebiete_path"]],
                 disgem,
                 year,
                 paste0("VG250_", abb, ".shp")
@@ -45,7 +53,7 @@ georeferencing <- function(org_data = org_data) {
         ) |>
         # keep only AGS and geometry columns
         dplyr::select(
-            AGS, geometry
+            AGS, GEN, geometry
         )
 
         # convert factors
@@ -60,7 +68,8 @@ georeferencing <- function(org_data = org_data) {
 
         # transform to UTM
         dta <- sf::st_transform(
-            dta, crs = utmcrs
+            dta,
+            crs = config_globals()[["utmcrs"]]
         )
 
         #----------------------------------------------
@@ -93,7 +102,7 @@ georeferencing <- function(org_data = org_data) {
     # load data
     grids <- sf::st_read(
         file.path(
-            paths()[["gebiete_path"]],
+            config_paths()[["gebiete_path"]],
             "Raster",
             "grids_BRD.shp"
         ),
@@ -114,7 +123,7 @@ georeferencing <- function(org_data = org_data) {
     # transform 
     grids <- sf::st_transform(
         grids,
-        crs = utmcrs
+        crs = config_globals()[["utmcrs"]]
     )
 
     #----------------------------------------------
@@ -125,7 +134,7 @@ georeferencing <- function(org_data = org_data) {
 
     # define as spatial data
     org_data_sf <- sf::st_as_sf(
-        org_data,
+        org_data_cleaned,
         coords = c("geox", "geoy"),
         crs = projection_immo
     )
@@ -136,7 +145,7 @@ georeferencing <- function(org_data = org_data) {
     # transform to GPS
     lonlat_gps <- sf::st_transform(
         org_data_sf,
-        crs = gpscrs
+        crs = config_globals()[["gpscrs"]]
     )
 
     # get coordinates
@@ -162,7 +171,8 @@ georeferencing <- function(org_data = org_data) {
 
     # merge to original data
     org_data_sf <- cbind(
-        org_data_sf, coords_gps
+        org_data_sf,
+        coords_gps
     )
 
     #----------------------------------------------
@@ -171,7 +181,7 @@ georeferencing <- function(org_data = org_data) {
     # transform to UTM
     lonlat_utm <- sf::st_transform(
         org_data_sf,
-        crs = utmcrs
+        crs = config_globals()[["utmcrs"]]
     )
 
     # get coordinates
@@ -184,11 +194,12 @@ georeferencing <- function(org_data = org_data) {
 
     # merge to original data
     org_data_sf <- cbind(
-        org_data_sf, coords_utm
+        org_data_sf,
+        coords_utm
     )
 
     # remove geometry from data
-    org_data_sf <- st_drop_geometry(org_data_sf)
+    org_data_sf <- sf::st_drop_geometry(org_data_sf)
 
     #----------------------------------------------
     # Merge other geo data
@@ -197,7 +208,7 @@ georeferencing <- function(org_data = org_data) {
     org_data_sf <- sf::st_as_sf(
         org_data_sf,
         coords = c("lon_utm", "lat_utm"),
-        crs = 25832,
+        crs = config_globals()[["utmcrs"]],
         remove = FALSE
     )
 
@@ -238,7 +249,10 @@ georeferencing <- function(org_data = org_data) {
     org_data_prep <- org_data_prep |>
         dplyr::mutate(
             dplyr::across(
-                .cols = c("lat_gps", "lon_gps", "lat_utm", "lon_utm"),
+                .cols = c(
+                    "lat_gps", "lon_gps",
+                    "lat_utm", "lon_utm"
+                ),
                 ~ dplyr::case_when(
                     is.na(gid2019) ~ -9,
                     TRUE ~ .x
@@ -252,7 +266,10 @@ georeferencing <- function(org_data = org_data) {
         dplyr::mutate(
             ergg_1km = as.character(idm),
             dplyr::across(
-                .cols = c("lat_gps", "lon_gps", "lat_utm", "lon_utm", "gid2019", "kid2019"),
+                .cols = c(
+                    "lat_gps", "lon_gps", "lat_utm",
+                    "lon_utm", "gid2019", "kid2019"
+                ),
                 ~ as.numeric(.x)
             )
         ) |>
@@ -261,16 +278,14 @@ georeferencing <- function(org_data = org_data) {
     #----------------------------------------------
     # export
 
-    data.table::fwrite(
+    fst::write.fst(
         org_data_prep,
         file.path(
-            paths()[["data_path"]],
+            config_paths()[["data_path"]],
             "processed",
             current_delivery,
-            "clean_data_georeferenced.csv"
-        ),
-        na = NA,
-        sep = ";"
+            "clean_data_georeferenced.fst"
+        )
     )
 
     #----------------------------------------------
