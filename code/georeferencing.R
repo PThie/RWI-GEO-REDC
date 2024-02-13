@@ -8,21 +8,7 @@ georeferencing <- function(org_data_cleaned = org_data_cleaned) {
     #' 
     #' @return DataFrame
     #' @author Patrick Thiel
-    #TODO: add state ID if not already in the code
-    # TODO: Remove GKZ
-    # TODO: Use geocoordinate to find all geographical units and if no geo coordinate
-    # is found, use Immo info (like GKZ, PLZ, Kreis) to fill in blanks (drop Immo variables afterwards)
-    org_data_cleaned = read.fst(
-        file.path(
-            config_paths()[["data_path"]],
-            "processed",
-            "Lieferung_2306",
-            "clean_data.fst"
-        )
-    )
 
-    names(org_data_cleaned)
-    
     #----------------------------------------------
     # function for reading data
 
@@ -263,6 +249,16 @@ georeferencing <- function(org_data_cleaned = org_data_cleaned) {
         )
     )
 
+    # add zipcodes
+    suppressWarnings(
+        org_data_sf <- sf::st_join(
+            org_data_sf,
+            PLZ_2019,
+            left = TRUE,
+            largest = TRUE
+        )
+    )
+
     # add grid
     suppressWarnings(
         org_data_sf <- sf::st_join(
@@ -299,7 +295,7 @@ georeferencing <- function(org_data_cleaned = org_data_cleaned) {
             dplyr::across(
                 .cols = c(
                     "lat_gps", "lon_gps", "lat_utm",
-                    "lon_utm", "gid2019", "kid2019"
+                    "lon_utm"
                 ),
                 ~ as.numeric(.x)
             )
@@ -308,6 +304,38 @@ georeferencing <- function(org_data_cleaned = org_data_cleaned) {
 
     #----------------------------------------------
     # fill blid and zipcodes
+
+    org_data_prep <- org_data_prep |>
+        dplyr::mutate(
+            blid = as.character(blid),
+            blid = dplyr::case_when(
+                nchar(blid) == 1 ~ paste0("0", blid),
+                TRUE ~ blid
+            ),
+            # recode proper NA for foalesce to work
+            blid = dplyr::case_when(
+                blid == "-9" ~ NA_character_,
+                TRUE ~ blid
+            ),
+            blid_aux = substring(gid2019, 1, 2),
+            # fill state ID (if missing) with ID obtained from spatial join
+            blid = data.table::fcoalesce(blid, blid_aux),
+            # do the same for zipcodes
+            plz = dplyr::case_when(
+                plz == "-9" ~ NA_character_,
+                TRUE ~ plz
+            ),
+            plz = data.table::fcoalesce(plz, plz2019)
+        ) |>
+        dplyr::select(-c(blid_aux, plz2019)) |>
+        # recode missings again to match missing definition of REDC/RED
+        dplyr::replace_na(list(blid = "-9", plz = "-9"))
+
+    #----------------------------------------------
+    # remove GKZ variable
+
+    org_data_prep <- org_data_prep |>
+        dplyr::select(-gkz)
 
     #----------------------------------------------
     # export
@@ -323,7 +351,7 @@ georeferencing <- function(org_data_cleaned = org_data_cleaned) {
     )
 
     #----------------------------------------------
+    # return output
 
     return(org_data_prep)
-
 }
