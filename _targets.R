@@ -215,12 +215,12 @@ targets_preparation <- rlang::list2(
             )
         )
     ),
-    # tar_target(
-    #     org_data_geo,
-    #     georeferencing(
-    #         org_data_cleaned = org_data_cleaned
-    #     )
-    # )
+    tar_target(
+        org_data_geo,
+        georeferencing(
+            org_data_cleaned = org_data_cleaned
+        )
+    )
 )
 
 #----------------------------------------------
@@ -232,6 +232,9 @@ targets_unit_testing <- rlang::list2(
 
     # check that all variables are in reasonable ranges
     # compare to previous delivery
+
+    # check that municipality, district, state ID have the correct character
+    # lengths (8, 5, 2)
 )
 
 #----------------------------------------------
