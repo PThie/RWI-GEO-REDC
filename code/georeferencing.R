@@ -144,6 +144,20 @@ georeferencing <- function(org_data_cleaned = org_data_cleaned) {
     )
 
     #----------------------------------------------
+    # split housing data into consisting coordinates and without coordinates
+    # because geo-referencing does not work with missings in coordinates
+
+    org_data_wo_coords <- org_data_cleaned |>
+        dplyr::filter(
+            geox == -9
+        )
+
+    org_data_coords <- org_data_cleaned |>
+        dplyr::filter(
+            geox != -9
+        )
+    
+    #----------------------------------------------
     # transform the coordinate system of the Immo data
 
     # this is the projection Immoscout uses
@@ -151,7 +165,7 @@ georeferencing <- function(org_data_cleaned = org_data_cleaned) {
 
     # define as spatial data
     org_data_sf <- sf::st_as_sf(
-        org_data_cleaned,
+        org_data_coords,
         coords = c("geox", "geoy"),
         crs = projection_immo
     )
@@ -304,6 +318,8 @@ georeferencing <- function(org_data_cleaned = org_data_cleaned) {
 
     #----------------------------------------------
     # fill blid and zipcodes
+    # NOTE: filling algorithm uses the given information first and the
+    # information from the spatial join second
 
     org_data_prep <- org_data_prep |>
         dplyr::mutate(
@@ -329,10 +345,96 @@ georeferencing <- function(org_data_cleaned = org_data_cleaned) {
         ) |>
         dplyr::select(-c(blid_aux, plz2019)) |>
         # recode missings again to match missing definition of REDC/RED
-        dplyr::replace_na(list(blid = "-9", plz = "-9"))
+        tidyr::replace_na(list(blid = "-9", plz = "-9"))
 
     #----------------------------------------------
-    # remove GKZ variable
+    # fill municipality and district ID
+    # NOTE: filling algorithm uses the given information first and the
+    # information from the spatial join second
+
+    org_data_prep <- org_data_prep |>
+        dplyr::mutate(
+            # generate helper variables for municipality ID using
+            # the given Immo information
+            gid2019_aux = as.character(gkz),
+            gid2019_aux = dplyr::case_when(
+                gid2019_aux == "-9" ~ NA_character_,
+                TRUE ~ gid2019_aux
+            ),
+            gid2019_aux = dplyr::case_when(
+                nchar(gid2019_aux) == 7 ~ paste0("0", gid2019_aux),
+                TRUE ~ gid2019_aux
+            ),
+            # fill missing municipality ID with ID obtained from spatial join
+            gid2019_aux = data.table::fcoalesce(gid2019_aux, gid2019),
+            # do the same for district ID
+            kid2019_aux = dplyr::case_when(
+                !is.na(gid2019_aux) ~ substring(gid2019_aux, 1, 5),
+                TRUE ~ NA_character_
+            ),
+            kid2019_aux = data.table::fcoalesce(kid2019_aux, kid2019)
+        ) |>
+        dplyr::select(-c(gid2019, kid2019)) |>
+        dplyr::rename(
+            gid2019 = gid2019_aux,
+            kid2019 = kid2019_aux
+        )
+
+    #----------------------------------------------
+    # add geo IDs to the data set with no coordinates
+
+    org_data_wo_coords <- org_data_wo_coords |>
+        dplyr::mutate(
+            dplyr::across(
+                .cols = c(
+                    "lon_gps", "lat_gps",
+                    "lon_utm", "lat_utm"
+                ),
+                ~ -9
+            ),
+            ergg_1km = "-9",
+            # use the given municipality information to add municipality and
+            # district ID inline with the data set with coordinates
+            gid2019 = as.character(gkz),
+            gid2019 = dplyr::case_when(
+                nchar(gid2019) == 7 ~ paste0("0", gid2019),
+                TRUE ~ gid2019
+            ),
+            kid2019 = dplyr::case_when(
+                !is.na(gid2019) ~ substring(gid2019, 1, 5),
+                TRUE ~ NA_character_
+            )
+        )
+
+    # merge municipality names
+    org_data_wo_coords <- merge(
+        org_data_wo_coords,
+        GEM_2019 |>
+            sf::st_drop_geometry(),
+        by = "gid2019",
+        all.x = TRUE
+    )
+
+    # merge district names
+    org_data_wo_coords <- merge(
+        org_data_wo_coords,
+        KRS_2019 |>
+            sf::st_drop_geometry(),
+        by = "kid2019",
+        all.x = TRUE
+    )
+
+    #----------------------------------------------
+    # combine both data sets again (with and without coordinates)
+
+    org_data_prep <- dplyr::bind_rows(
+        org_data_prep,
+        org_data_wo_coords
+    )
+    
+    #----------------------------------------------
+    # drop given municipality information
+    # because not needed anymore (incorparated in the other spatial IDs)
 
     org_data_prep <- org_data_prep |>
         dplyr::select(-gkz)
