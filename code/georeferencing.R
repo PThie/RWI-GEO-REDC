@@ -385,13 +385,10 @@ georeferencing <- function(org_data_cleaned = org_data_cleaned) {
 
     org_data_wo_coords <- org_data_wo_coords |>
         dplyr::mutate(
-            dplyr::across(
-                .cols = c(
-                    "lon_gps", "lat_gps",
-                    "lon_utm", "lat_utm"
-                ),
-                ~ -9
-            ),
+            lon_gps = -9,
+            lat_gps = -9,
+            lon_utm = -9,
+            lat_utm = -9,
             ergg_1km = "-9",
             # use the given municipality information to add municipality and
             # district ID inline with the data set with coordinates
@@ -403,6 +400,12 @@ georeferencing <- function(org_data_cleaned = org_data_cleaned) {
             kid2019 = dplyr::case_when(
                 !is.na(gid2019) ~ substring(gid2019, 1, 5),
                 TRUE ~ NA_character_
+            ),
+            # set state ID as character to match the data set with coordinates
+            blid = as.character(blid),
+            blid = dplyr::case_when(
+                nchar(blid) == 1 ~ paste0("0", blid),
+                TRUE ~ blid
             )
         )
 
