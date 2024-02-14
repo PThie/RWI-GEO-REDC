@@ -450,7 +450,7 @@ georeferencing <- function(org_data_cleaned = org_data_cleaned) {
         file.path(
             config_paths()[["data_path"]],
             "processed",
-            current_delivery,
+            config_globals()[["current_delivery"]],
             "clean_data_georeferenced.fst"
         )
     )
