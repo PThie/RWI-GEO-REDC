@@ -17,13 +17,22 @@ clean_org_data <- function(org_data_expanded = NA, current_delivery = NA, max_ye
     # make all names lowercase
     names(org_data_expanded) <- tolower(names(org_data_expanded))
 
+    # define REDC delivery as variable
+    if (config_globals()[["current_delivery"]] == "Lieferung_23121") {
+        # NOTE: Lieferung_23121 was delivered later than Lieferung_2312 but
+        # still belongs to the same wave
+        del <- "Lieferung_2312"
+    } else {
+        del <- config_globals()[["current_delivery"]]
+    }
+
     # apply cleaning steps
     org_data_prep <- org_data_expanded |>
         dplyr::mutate(
             #----------------------------------------------
             # add current version and delivery (more for internal documentation)
             redc_version = config_globals()[["current_version"]],
-            redc_delivery = config_globals()[["current_delivery"]],
+            redc_delivery = del,
             #----------------------------------------------
             # split date variable
             # starting year and month
