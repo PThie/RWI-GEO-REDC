@@ -167,7 +167,8 @@ georeferencing <- function(org_data_cleaned = org_data_cleaned) {
     org_data_sf <- sf::st_as_sf(
         org_data_coords,
         coords = c("geox", "geoy"),
-        crs = projection_immo
+        crs = projection_immo,
+        remove = FALSE
     )
 
     #----------------------------------------------
