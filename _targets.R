@@ -1,77 +1,72 @@
 #----------------------------------------------
-# used during execution of pipeline
+# description
 
-pipeline_library <- c(
-    "stringr", # text manipulation via regex
-    "dplyr", # data manipulation
-    "data.table", # data manipulation
-    "fst", # data file storage format
-    "sf", # geo-data manipulation
-    "ggplot2", # plotting
-    "MetBrewer" # colors
-)
+# This file is the main file that orchestrates the other coding files. It
+# controls the data pipeline and defines the global settings.
 
-# install.packages(
-#     c(
-#         "targets", "tarchetypes", "future", "future.callr",
-#         "fst", "renv", "rlang", "qs", "docstring", "cli",
-#         "stringr", "stringi", "dplyr", "tidyr", "data.table",
-#         "sf", "openxlsx", "ggplot2", "MetBrewer", "here"
-#     )
-# )
-
-suppressPackageStartupMessages({
-    # used during setup of pipeline
-    library(here)
-    library(targets)
-    library(tarchetypes)
-    library(future)
-    library(future.callr)
-    library(fst)
-    library(renv)
-    library(rlang)
-    library(qs)
-    library(docstring)
-    library(cli)
-
-    # used during execution of pipeline
-    library(stringr)
-    library(stringi)
-    library(dplyr)
-    library(tidyr)
-    library(data.table)
-    library(sf)
-    library(openxlsx)
-    library(ggplot2)
-    library(MetBrewer)
-})
+###################################################
+# PIPELINE SETTINGS
+###################################################
 
 #----------------------------------------------
-# set up for future package
+# load libraries
 
-tar_option_set(
-    resources = tar_resources(
-        fst = tar_resources_fst(compress = 100)
-    ),
-    packages = pipeline_library,
-    seed = 1,
-    garbage_collection = TRUE,
-    memory = "transient"
-)
+suppressPackageStartupMessages({
+    library(targets)
+    library(renv)
+    library(dplyr)
+    library(here)
+    library(tarchetypes)
+    library(haven)
+    library(sf)
+    library(stringr)
+    library(lubridate)
+    library(fst)
+    library(qs)
+    library(fixest)
+    library(openxlsx)
+    library(future)
+    library(future.callr)
+    library(MetBrewer)
+    library(ggplot2)
+    library(docstring)
+    library(arrow)
+    library(crew)
+})
 
 #----------------------------------------------
 # working directory
 
 setwd(here())
 
+#--------------------------------------------------
+# Pipeline settings
+
+# target options
+tar_option_set(
+    resources = tar_resources(
+        fst = tar_resources_fst(compress = 50)
+    ),
+    seed = 1,
+    garbage_collection = TRUE,
+    memory = "transient",
+    controller = crew_controller_local(
+        name = "my_controller",
+        workers = 3,
+        seconds_idle = 10
+    ),
+    retrieval = "worker",
+    storage = "worker"
+)
+
 #----------------------------------------------
 # load configurations
-# TODO-NEW-DELIVERY: Adjust the globals to new delivery
-# TODO-NEW-DELIVERY: Check if list of variables to be removed is still correct
+# TODO NEW WAVE: Adjust the globals to new delivery
+# TODO NEW WAVE: Check if list of variables to be removed is still correct
 
 source(
     file.path(
-        here(),
+        here::here(),
         "code",
         "helpers",
         "config.R"
@@ -79,68 +74,51 @@ source(
 )
 
 #----------------------------------------------
-# Read main files
+# load R scripts
 
-lapply(
-    list.files(
-        config_paths()[["code_path"]],
-        pattern = ".R$",
-        full.names = TRUE,
-        all.files = FALSE
-    ),
-    source
+sub_directories <- list.dirs(
+    config_paths()[["code_path"]],
+    full.names = FALSE,
+    recursive = FALSE
 )
 
-#----------------------------------------------
-# folder generation for new delivery (in data folder)
-
-for (data_folder in c("on-site", "processed", "SUF")) {
-    if (data_folder == "processed") {
-        ifelse(
-            !dir.exists(
+for (sub_directory in sub_directories) {
+    if (sub_directory != "helpers") { 
+        lapply(
+            list.files(
                 file.path(
-                    config_paths()[["data_path"]],
-                    data_folder,
-                    config_globals()[["current_delivery"]]
-                )
+                    config_paths()[["code_path"]],
+                    sub_directory
+                ),
+                pattern = "\\.R$",
+                full.names = TRUE,
+                ignore.case = TRUE
             ),
-            yes = dir.create(
-                file.path(
-                    config_paths()[["data_path"]],
-                    data_folder,
-                    config_globals()[["current_delivery"]]
-                )
-            ),
-            no = cli::cli_alert_success(
-                col_green(
-                    "Delivery directory for \"{data_folder}\" data folder already exists."    
-                )
-            )
+            source
         )
     } else {
-        ifelse(
-            !dir.exists(
-                file.path(
-                    config_paths()[["data_path"]],
-                    data_folder,
-                    config_globals()[["current_version"]]
-                )
+        files <- list.files(
+            file.path(
+                config_paths()[["code_path"]],
+                sub_directory
             ),
-            yes = dir.create(
-                file.path(
-                    config_paths()[["data_path"]],
-                    data_folder,
-                    config_globals()[["current_version"]]
-                )
-            ),
-            no = cli::cli_alert_success(
-                col_green(
-                    "Version directory for \"{data_folder}\" data folder already exists."    
-                )
-            )
+            pattern = "\\.R$",
+            full.names = TRUE,
+            ignore.case = TRUE
         )
+        files <- files[
+            stringr::str_detect(
+                files,
+                "config.R$"
+            ) == FALSE
+        ]
+        lapply(files, source)
     }
 }
+
+###################################################
+# ACTUAL PIPELINE
+###################################################
 
 #----------------------------------------------
 # MAYBE DELETE LATER
@@ -223,6 +201,30 @@ targets_preparation <- rlang::list2(
     )
 )
 
+#--------------------------------------------------
+# combine each wave
+
+targets_append <- rlang::list2(
+    tar_target(
+        org_data_append,
+        append_waves(
+            deliveries = config_globals()[["deliveries"]]
+        )
+    )
+)
+
+#--------------------------------------------------
+# cleaning on combined data set
+
+targets_combine_cleaning <- rlang::list2(
+    tar_fst(
+        org_data_append_cleaned,
+        clean_append_data(
+            org_data_append = org_data_append
+        )
+    )
+)
+
 #----------------------------------------------
 # Unit testing
 # TODO: entire block
@@ -241,7 +243,9 @@ targets_unit_testing <- rlang::list2(
 # combine all target branches
 
 rlang::list2(
-    # targets_files,
+    targets_files,
     targets_reading,
-    targets_preparation
+    targets_preparation,
+    targets_append,
+    #targets_combine_cleaning
 )
