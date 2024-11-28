@@ -1,4 +1,4 @@
-#----------------------------------------------
+#--------------------------------------------------
 # description
 
 # This file is the main file that orchestrates the other coding files. It
@@ -8,7 +8,7 @@
 # PIPELINE SETTINGS
 ###################################################
 
-#----------------------------------------------
+#--------------------------------------------------
 # load libraries
 
 suppressPackageStartupMessages({
@@ -17,24 +17,12 @@ suppressPackageStartupMessages({
     library(dplyr)
     library(here)
     library(tarchetypes)
-    library(haven)
-    library(sf)
-    library(stringr)
-    library(lubridate)
     library(fst)
-    library(qs)
-    library(fixest)
-    library(openxlsx)
-    library(future)
-    library(future.callr)
-    library(MetBrewer)
-    library(ggplot2)
     library(docstring)
-    library(arrow)
     library(crew)
 })
 
-#----------------------------------------------
+#--------------------------------------------------
 # working directory
 
 setwd(here())
@@ -59,7 +47,7 @@ tar_option_set(
     storage = "worker"
 )
 
-#----------------------------------------------
+#--------------------------------------------------
 # load configurations
 # TODO NEW WAVE: Adjust the globals to new delivery
 # TODO NEW WAVE: Check if list of variables to be removed is still correct
@@ -73,7 +61,7 @@ source(
     )
 )
 
-#----------------------------------------------
+#--------------------------------------------------
 # load R scripts
 
 sub_directories <- list.dirs(
@@ -120,14 +108,24 @@ for (sub_directory in sub_directories) {
 # ACTUAL PIPELINE
 ###################################################
 
-#----------------------------------------------
+#--------------------------------------------------
+# Folder generation
+
+targets_preparation_folders <- rlang::list2(
+    tar_target(
+        empty_folders,
+        creating_folder_structure()
+    )
+)
+
+#--------------------------------------------------
 # MAYBE DELETE LATER
 # define column names from previous deliveries
 # NOTE: even though this is define in config as global, I am loading it here
 # as global to avoid reading the data set in the config specification over and
 # over again. This saves runtime.
 
-#----------------------------------------------
+#--------------------------------------------------
 # Prepare original files for further processing
 # Adjust the file naming
 # NOTE: This step is only needed for the new delivery since the past deliveries
@@ -143,7 +141,7 @@ targets_files <- rlang::list2(
     )
 )
 
-#----------------------------------------------
+#--------------------------------------------------
 # read original data
 
 targets_reading <- rlang::list2(
@@ -165,7 +163,7 @@ targets_reading <- rlang::list2(
     )
 )
 
-#----------------------------------------------
+#--------------------------------------------------
 # Preparation of the original data
 # NOTE: This step is only needed for the new delivery since the past deliveries
 # already have been cleaned.
@@ -225,7 +223,7 @@ targets_combine_cleaning <- rlang::list2(
     )
 )
 
-#----------------------------------------------
+#--------------------------------------------------
 # Unit testing
 # TODO: entire block
 
@@ -239,13 +237,14 @@ targets_unit_testing <- rlang::list2(
     # lengths (8, 5, 2)
 )
 
-#----------------------------------------------
+#--------------------------------------------------
 # combine all target branches
 
 rlang::list2(
-    targets_files,
-    targets_reading,
-    targets_preparation,
-    targets_append,
-    #targets_combine_cleaning
+    targets_preparation_folders,
+    # targets_files,
+    # targets_reading,
+    # targets_preparation,
+    # targets_append,
+    #t argets_combine_cleaning
 )
