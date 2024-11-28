@@ -1,4 +1,4 @@
-read_org_data <- function(redc_raw_file = NA) {
+reading_org_data <- function(redc_raw_file = NA) {
     #' @title Reading original data
     #' 
     #' @description This function reads the raw data.
