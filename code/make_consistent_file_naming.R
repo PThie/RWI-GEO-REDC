@@ -2,7 +2,9 @@ make_consistent_file_naming <- function(current_delivery = NA) {
     #' @title Make consistent file naming
     #' 
     #' @description This function guarantees consistent file naming for the next
-    #' steps.
+    #' steps. This should only apply to the data in delivery 2312 because the data
+    #' was delivered in single batches and needs to be combined to have a similar
+    #' file as for the other deliveries.
     #' 
     #' @param current_delivery The current delivery.
     #' 
@@ -64,9 +66,6 @@ make_consistent_file_naming <- function(current_delivery = NA) {
                 "commercial_data_all.csv"
             )
         )
-    } else {
-        # TODO-NEW-DELIVERY: Add here code for new delivery depending how the
-        # original files are named
     }
 
     #----------------------------------------------
