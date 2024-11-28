@@ -238,6 +238,19 @@ targets_unit_testing <- rlang::list2(
 )
 
 #--------------------------------------------------
+# pipeline stats
+
+targets_pipeline_stats <- rlang::list2(
+    # NOTE: targets type has to be tar_file in order to use tar_progress_summary
+    # and tar_crew within the pipeline
+    tar_file(
+        pipeline_stats,
+        helpers_monitoring_pipeline(),
+        cue = tar_cue(mode = "always")
+    )
+)
+
+#--------------------------------------------------
 # combine all target branches
 
 rlang::list2(
@@ -246,5 +259,6 @@ rlang::list2(
     # targets_reading,
     # targets_preparation,
     # targets_append,
-    #t argets_combine_cleaning
+    #t argets_combine_cleaning,
+    targets_pipeline_stats
 )
