@@ -1,4 +1,4 @@
-make_consistent_file_naming <- function(current_delivery = NA) {
+making_consistent_file_naming <- function(current_delivery = NA) {
     #' @title Make consistent file naming
     #' 
     #' @description This function guarantees consistent file naming for the next
