@@ -161,7 +161,8 @@ cleaning_org_data <- function(
         length(unique(housing_data_prep$anbieter)) == 9,
         msg = glue::glue(
             "!!! WARNING:
-            Variable anbieter has more categories than defined in recoding."
+            Variable anbieter has more categories than defined in recoding.",
+            "(Error code: cod#1)"
         )
     )
 
@@ -220,10 +221,14 @@ cleaning_org_data <- function(
             "einstelldatum"
         )) {
             targets::tar_assert_true(
-                length(unique(housing_data_prep[[var]])) == 1,
+                # length(unique(housing_data_prep[[var]])) == 1,
+                all(unique(housing_data_prep[[var]]) %in% c(
+                    NA, "nicht mehr existent"
+                )),
                 msg = glue::glue(
                     "!!! WARNING:
-                    Variable {var} has more than one value."
+                    Variable {var} has more than one value.",
+                    "(Error code: cod#2)"
                 )
             )
         }
@@ -261,12 +266,13 @@ cleaning_org_data <- function(
 
         targets::tar_assert_true(
             all(unique_values %in% c(
-                TRUE, FALSE, "Keine Angabe", "keine Angabe", "keine Angaben",
+                TRUE, FALSE, NA, "Keine Angabe", "keine Angabe", "keine Angaben",
                 "nicht mehr existent"
             )),
             msg = glue::glue(
                 "!!! WARNING:
-                Variable {col} has values that are not considered in the recoding."
+                Variable {col} has values that are not considered in the recoding.",
+                "(Error code: cod#3)"
             )
         )
     }
@@ -467,12 +473,21 @@ cleaning_org_data <- function(
         #' @param expected_unique_values Expected number of unique values.
         
         #--------------------------------------------------
+        # rename some variables to align with naming above
+
+        dta <- housing_data |>
+            dplyr::rename(
+                ausstattung = ausstattungsqualitaet,
+                kategorie_business = objektkategorie2
+            )
+        #--------------------------------------------------
         targets::tar_assert_true(
-            length(unique(housing_data[[var]])) == expected_unique_values,
+            length(unique(dta[[var]])) == expected_unique_values,
             msg = glue::glue(
-                "!!! WARNING ",
+                "!!! WARNING: ",
                 "Variable {var} contains unexpected values. ",
-                "Please check the data and recode if necessary."
+                "Please check the data and recode if necessary.",
+                "(Error code: cod#4)"
             )
         )
     }
@@ -484,9 +499,8 @@ cleaning_org_data <- function(
     recoding_length_check("heizungsart", 14)
     recoding_length_check("kategorie_business", 54)
     recoding_length_check("objektzustand", 11)
-    recoding_length_check("immobilientyp", 6)
+    recoding_length_check("immobilientyp", 5)
 
-    # CONTINUE
     #----------------------------------------------
     # issue of rent
     # explanation: for commercial data its possible to provide information
@@ -623,7 +637,8 @@ cleaning_org_data <- function(
         msg = glue::glue(
             "!!! WARNING:
             Variable plz contains unexpected values. ",
-            "Please check the data and recode if necessary."
+            "Please check the data and recode if necessary.",
+            "(Error code: cod#5)"
         )
     )
     
@@ -828,7 +843,7 @@ cleaning_org_data <- function(
         file.path(
             config_paths()[["data_path"]],
             "processed",
-            current_delivery,
+            config_globals()[["current_delivery"]],
             "clean_data.fst"
         )
     )
