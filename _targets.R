@@ -20,6 +20,9 @@ suppressPackageStartupMessages({
     library(fst)
     library(docstring)
     library(crew)
+    library(glue)
+    library(cli)
+    library(tidyr)
 })
 
 #--------------------------------------------------
@@ -128,14 +131,13 @@ targets_preparation_folders <- rlang::list2(
 #--------------------------------------------------
 # Prepare original files for further processing
 # Adjust the file naming
-# NOTE: This step is only needed for the new delivery since the past deliveries
-# already have been cleaned.
-# TODO-NEW-DELIVERY: Adjust the file naming in else clause
+# NOTE: This step is only if the new delivery comes in subfolders (add else clause
+# if needed). The past deliveries already have been cleaned.
 
 targets_files <- rlang::list2(
     tar_target(
         file_naming,
-        make_consistent_file_naming(
+        making_consistent_file_naming(
             current_delivery = config_globals()[["current_delivery"]]
         )
     )
@@ -147,18 +149,35 @@ targets_files <- rlang::list2(
 targets_reading <- rlang::list2(
     tar_file_read(
         org_data,
-        # path to original data (automatically paste into read sfunction)
         file.path(
             config_paths()[["data_path"]],
             "original",
             config_globals()[["current_delivery"]],
             "commercial_data_all.csv"
         ),
-        # actual reading
         suppressWarnings(
-            read_org_data(
+            reading_org_data(
                 !!.x
             )
+        )
+    ),
+    tar_eval(
+        list(
+            tar_qs(
+                spatial_data,
+                reading_geo_data(
+                    spatial_unit = spatial_unit_german,
+                    year = 2019,
+                    ags_name = ags_names,
+                    gen_name = gen_names
+                )
+            )
+        ),
+        values = list(
+            spatial_data = rlang::syms(helpers_target_names()[["spatial_data"]]), 
+            spatial_unit_german = helpers_target_names()[["spatial_units_german"]],
+            ags_names = helpers_target_names()[["ags_names"]],
+            gen_names = helpers_target_names()[["gen_names"]]
         )
     )
 )
@@ -169,34 +188,33 @@ targets_reading <- rlang::list2(
 # already have been cleaned.
 
 targets_preparation <- rlang::list2(
+    # TODO: Implement with new wave
     # NOTE: if the pipeline stops due to inconsistent variables, make the appropriate
     # changes in read_org_data.R and when done add the variable to the list of
     # fixed variables in testing_consistent_variables.R
-    tar_target(
-        org_data_expanded,
-        testing_consistent_variables(
-            org_data = org_data,
-            current_delivery = config_globals()[["current_delivery"]]
-        )
-    ),
+    # tar_target(
+    #     org_data_expanded,
+    #     testing_consistent_variables(
+    #         org_data = org_data,
+    #         current_delivery = config_globals()[["current_delivery"]]
+    #     )
+    # ),
     tar_fst(
         org_data_cleaned,
         # suppress warnings because conversion of characters to numeric
         # generates warnings
         suppressWarnings(
-            clean_org_data(
-                org_data_expanded = org_data_expanded,
-                current_delivery = config_globals()[["current_delivery"]],
-                max_year = config_globals()[["max_year"]]
+            cleaning_org_data(
+                housing_data = org_data
             )
         )
     ),
-    tar_target(
-        org_data_geo,
-        georeferencing(
-            org_data_cleaned = org_data_cleaned
-        )
-    )
+    # tar_target(
+    #     org_data_geo,
+    #     georeferencing(
+    #         org_data_cleaned = org_data_cleaned
+    #     )
+    # )
 )
 
 #--------------------------------------------------
@@ -255,9 +273,9 @@ targets_pipeline_stats <- rlang::list2(
 
 rlang::list2(
     targets_preparation_folders,
-    # targets_files,
-    # targets_reading,
-    # targets_preparation,
+    targets_files,
+    targets_reading,
+    targets_preparation,
     # targets_append,
     #t argets_combine_cleaning,
     targets_pipeline_stats
