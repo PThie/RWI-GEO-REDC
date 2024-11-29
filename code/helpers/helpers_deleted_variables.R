@@ -25,6 +25,10 @@ helpers_deleted_variables <- function() {
         "foerderung",
         "parkplatzpreis",
         "wohngeld",
+        "mietewarm",
+        "kaufvermietet",
+        "heizkosten",
+        "anzahletagen",
         "is24_stadt_kreis", # dropped in RED as well
         "kreis",
         "is24_bezirk_gemeinde", # dropped in RED as well
