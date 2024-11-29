@@ -50,7 +50,7 @@ creating_folder_structure <- function() {
                     )
                 ),
                 no = cli::cli_alert_success(
-                    col_green(
+                    cli::col_green(
                         "Version directory for \"{data_folder}\" data folder already exists."    
                     )
                 )
