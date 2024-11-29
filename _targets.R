@@ -179,6 +179,15 @@ targets_reading <- rlang::list2(
             ags_names = helpers_target_names()[["ags_names"]],
             gen_names = helpers_target_names()[["gen_names"]]
         )
+    ),
+    tar_file_read(
+        spatial_data_grids,
+        file.path(
+            config_paths()[["gebiete_path"]],
+            "Raster",
+            "grids_BRD.shp"
+        ),
+        reading_grids(!!.x)
     )
 )
 
@@ -209,6 +218,7 @@ targets_preparation <- rlang::list2(
             )
         )
     ),
+    # CONTINUE
     # tar_target(
     #     org_data_geo,
     #     georeferencing(
