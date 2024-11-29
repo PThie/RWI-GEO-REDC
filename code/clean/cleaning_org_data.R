@@ -1,4 +1,4 @@
-clean_org_data <- function(
+cleaning_org_data <- function(
     housing_data = NA
 ) {
     #' @title Cleaning original data
