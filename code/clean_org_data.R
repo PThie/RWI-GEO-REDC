@@ -1,12 +1,12 @@
-clean_org_data <- function(org_data_expanded = NA, current_delivery = NA, max_year = NA) {
+clean_org_data <- function(
+    housing_data = NA
+) {
     #' @title Cleaning original data
     #' 
     #' @description This function performs first cleaning steps. 
     #' Many steps are similar to the parent data set RWI-GEO-RED.
     #' 
-    #' @param org_data_expanded Raw original data where missing columns have been added
-    #' @param current_delivery The current delivery.
-    #' @param max_year The maximum year in the current delivery.
+    #' @param housing_data Raw housing data
     #' 
     #' @return DataFrame
     #' @author Patrick Thiel
@@ -15,24 +15,25 @@ clean_org_data <- function(org_data_expanded = NA, current_delivery = NA, max_ye
     # cleaning
     
     # make all names lowercase
-    names(org_data_expanded) <- tolower(names(org_data_expanded))
+    names(housing_data) <- tolower(names(housing_data))
 
     # define REDC delivery as variable
-    if (config_globals()[["current_delivery"]] == "Lieferung_23121") {
-        # NOTE: Lieferung_23121 was delivered later than Lieferung_2312 but
-        # still belongs to the same wave
-        del <- "Lieferung_2312"
-    } else {
-        del <- config_globals()[["current_delivery"]]
-    }
+    # NEEDED? with current_delivery_counter
+    # if (config_globals()[["current_delivery"]] == "Lieferung_23121") {
+    #     # NOTE: Lieferung_23121 was delivered later than Lieferung_2312 but
+    #     # still belongs to the same wave
+    #     del <- "Lieferung_2312"
+    # } else {
+    #     del <- config_globals()[["current_delivery"]]
+    # }
 
     # apply cleaning steps
-    org_data_prep <- org_data_expanded |>
+    housing_data_prep <- housing_data |>
         dplyr::mutate(
             #----------------------------------------------
             # add current version and delivery (more for internal documentation)
             redc_version = config_globals()[["current_version"]],
-            redc_delivery = del,
+            redc_delivery = config_globals()[["current_delivery_counter"]],
             #----------------------------------------------
             # split date variable
             # starting year and month
@@ -48,23 +49,33 @@ clean_org_data <- function(org_data_expanded = NA, current_delivery = NA, max_ye
                 energieeffizienzklasse == "" ~ NA_character_,
                 TRUE ~ energieeffizienzklasse
             ),
-            energieeffizienz_klasse = dplyr::case_when(
-                energieeffizienz_klasse == "" ~ NA_character_,
-                TRUE ~ energieeffizienz_klasse
-            ),
-            energieeffizienzklasse := data.table::fcoalesce(
-                energieeffizienzklasse,
-                energieeffizienz_klasse
-            ),
-            energieeffizienz_klasse = NULL,
+            # energieeffizienz_klasse = dplyr::case_when(
+            #     energieeffizienz_klasse == "" ~ NA_character_,
+            #     TRUE ~ energieeffizienz_klasse
+            # ),
+            # energieeffizienzklasse := data.table::fcoalesce(
+            #     energieeffizienzklasse,
+            #     energieeffizienz_klasse
+            # ),
+            # energieeffizienz_klasse = NULL,
             #----------------------------------------------
             # fix housing type (remove Umlaute)
-            immobilientyp = stringi::stri_trans_general(immobilientyp, "de-ASCII; Latin-ASCII"),
+            immobilientyp = stringi::stri_trans_general(
+                immobilientyp,
+                "de-ASCII; Latin-ASCII"
+            ),
             # add separator for two-word types
-            immobilientyp = stringr::str_replace_all(immobilientyp, fixed(" "), "_"),
+            immobilientyp = stringr::str_replace_all(
+                immobilientyp,
+                stringr::fixed(" "),
+                "_"
+            ),
             #----------------------------------------------
             # fix anbietertyp (remove Umlaute)
-            anbietertyp = stringi::stri_trans_general(anbietertyp, "de-ASCII; Latin-ASCII"),
+            anbietertyp = stringi::stri_trans_general(
+                anbietertyp,
+                "de-ASCII; Latin-ASCII"
+            ),
             # redefine anbieter
             anbieter = dplyr::case_when(
                 anbietertyp == "Privatanbieter" ~ 1,
@@ -80,7 +91,10 @@ clean_org_data <- function(org_data_expanded = NA, current_delivery = NA, max_ye
             anbieter = as.integer(anbieter),
             #----------------------------------------------
             # fix objektkategorie2 (remove Umlaute)
-            objektkategorie2 = stringi::stri_trans_general(objektkategorie2, "de-ASCII; Latin-ASCII"),
+            objektkategorie2 = stringi::stri_trans_general(
+                objektkategorie2,
+                "de-ASCII; Latin-ASCII"
+            ),
             #----------------------------------------------
             # replace NAs in befeuerungsarten
             befeuerungsarten = dplyr::case_when(
@@ -93,7 +107,7 @@ clean_org_data <- function(org_data_expanded = NA, current_delivery = NA, max_ye
             # "insert NAs because of coercion to numeric" which crashes the
             # pipeline
             bef1 = dplyr::case_when(
-                str_detect(befeuerungsarten, "|") ~ NA_character_,
+                stringr::str_detect(befeuerungsarten, "|") ~ NA_character_,
                 TRUE ~ befeuerungsarten
             ),
             bef1 = as.numeric(bef1),
@@ -110,19 +124,25 @@ clean_org_data <- function(org_data_expanded = NA, current_delivery = NA, max_ye
             #----------------------------------------------
             # bauphase
             bauphase = dplyr::case_when(
-                bauphase == "Keine Angabe" ~ "-7",
+                bauphase == "Keine Angabe" ~ as.character(
+                    helpers_missing_values()[["not_specified"]]
+                ),
                 TRUE ~ bauphase
             ),
             #----------------------------------------------
             # pets
             haustier_erlaubt = dplyr::case_when(
-                haustier_erlaubt == "Keine Angabe" ~ "-7",
+                haustier_erlaubt == "Keine Angabe" ~ as.character(
+                    helpers_missing_values()[["not_specified"]]
+                ),
                 TRUE ~ haustier_erlaubt
             ),
             #----------------------------------------------
             # heating costs in rent
             heizkosten_in_wm_enthalten = dplyr::case_when(
-                heizkosten_in_wm_enthalten == "null" ~ "-7",
+                heizkosten_in_wm_enthalten == "null" ~ as.character(
+                    helpers_missing_values()[["not_specified"]]
+                ),
                 heizkosten_in_wm_enthalten == "true" ~ "1",
                 heizkosten_in_wm_enthalten == "false" ~ "0",
                 TRUE ~ heizkosten_in_wm_enthalten
@@ -133,15 +153,27 @@ clean_org_data <- function(org_data_expanded = NA, current_delivery = NA, max_ye
         # set as dataframe
         as.data.frame()
 
+    #--------------------------------------------------
+    # check that anbieter is correctly recoded, i.e. has not more categories
+    # than defined in recoding
+
+    targets::tar_assert_true(
+        length(unique(housing_data_prep$anbieter)) == 9,
+        msg = glue::glue(
+            "!!! WARNING:
+            Variable anbieter has more categories than defined in recoding."
+        )
+    )
+
     #----------------------------------------------
     # rename columns "bef" (befeuerungsarten)
 
     # get the max amount of potential splits based on delimiter "|"
-    max_split <- max(org_data_prep$bef_count, na.rm = TRUE)
+    max_split <- max(housing_data_prep$bef_count, na.rm = TRUE)
 
     # extract original names (names to leave unchanged)
     # exception of bef1
-    org_names <- org_data_prep |>
+    org_names <- housing_data_prep |>
         dplyr::select(!contains("bef_help") & !contains("bef_count")) |>
         names()
 
@@ -156,14 +188,13 @@ clean_org_data <- function(org_data_expanded = NA, current_delivery = NA, max_ye
     }
 
     # assign new names
-    names(org_data_prep) <- c(org_names, new_names, "bef_count")
+    names(housing_data_prep) <- c(org_names, new_names, "bef_count")
 
     #----------------------------------------------
     # drop unnecessary columns
 
-    org_data_prep <- org_data_prep |>
+    housing_data_prep <- housing_data_prep |>
         dplyr::select(-c(
-            "einstelldatum", # not needed
             "bef_count", # auxiliary variable from previous step
             "befeuerungsarten", # transformed to bef1, bef2, ...
             "anbietertyp", # tranformed to anbieter
@@ -178,62 +209,100 @@ clean_org_data <- function(org_data_expanded = NA, current_delivery = NA, max_ye
     # delivered with the residential data together
     # remove those variables
 
-    for (var in config_delete_variables()) {
-        if (var %in% names(org_data_prep)) {
-            org_data_prep[[var]] <- NULL
+    # check that these variables are "empty", i.e. only one value like NA or
+    # "not used anymore"
+    for (var in helpers_deleted_variables()) {
+        # NOTE: these variables are dropped for other reasons (see
+        # helpers_deleted_variables) and are, therefore, excluded from checking
+        if (!var %in% c(
+            "is24_stadt_kreis", "kreis", "is24_bezirk_gemeinde",
+            "is24_bundesland", "skid", "bgid", "objekt_beschreibung",
+            "einstelldatum"
+        )) {
+            targets::tar_assert_true(
+                length(unique(housing_data_prep[[var]])) == 1,
+                msg = glue::glue(
+                    "!!! WARNING:
+                    Variable {var} has more than one value."
+                )
+            )
+        }
+    }
+
+    # remove variables
+    for (var in helpers_deleted_variables()) {
+        if (var %in% names(housing_data_prep)) {
+            housing_data_prep[[var]] <- NULL
         }
     }
 
     #----------------------------------------------
     # recode Immo's missing observations (-1) to our missings (-9)
 
-    org_data_prep[org_data_prep == -1] <- -9
+    housing_data_prep[
+        housing_data_prep == helpers_missing_values()[["immo_missing"]]
+    ] <- helpers_missing_values()[["other"]]
 
     #----------------------------------------------
     # fix dummy variables (Yes or No variables)
 
     # retrieve logical variables
     log_col <- c()
-    for (col in names(org_data_prep)) {
-        if(typeof(org_data_prep[[col]]) == "logical") {
+    for (col in names(housing_data_prep)) {
+        if(typeof(housing_data_prep[[col]]) == "logical") {
             log_col <- c(log_col, col)
         }
     }
 
+    # check that all possible values are considered in the recoding
+    for (col in log_col) {
+        # get unique values
+        unique_values <- unique(housing_data_prep[[col]])
+
+        targets::tar_assert_true(
+            all(unique_values %in% c(
+                TRUE, FALSE, "Keine Angabe", "keine Angabe", "keine Angaben",
+                "nicht mehr existent"
+            )),
+            msg = glue::glue(
+                "!!! WARNING:
+                Variable {col} has values that are not considered in the recoding."
+            )
+        )
+    }
+
     # recode logical variables
-    org_data_prep <- org_data_prep |>
+    housing_data_prep <- housing_data_prep |>
         dplyr::mutate(
             dplyr::across(
                 .cols = all_of(log_col),
                 ~ dplyr::case_when(
                     .x == TRUE ~ 1,
                     .x == FALSE ~ 0,
-                    .x == "nicht mehr existent" ~ -6,
+                    .x == "nicht mehr existent" ~ helpers_missing_values()[["not_used_anymore"]],
                     (.x == "Keine Angabe" | 
                         .x == "keine Angabe" | 
                         .x == "keine Angaben"
-                        ) ~ -7,
-                    TRUE ~ -9
+                        ) ~ helpers_missing_values()[["not_specified"]],
+                    TRUE ~ helpers_missing_values()[["other"]]
                 )
             )
         )
 
-    #----------------------------------------------
-    # recode variables that are old variables (and not on Immo anymore)
+    #--------------------------------------------------
+    # rename ausstattungsqualitaet if exists
 
-    org_data_prep <- org_data_prep |>
-        dplyr::mutate(
-            betreut = -6,
-            nebenraeume = -6
-        )
+    if ("ausstattungsqualitaet" %in% names(housing_data_prep)) {
+        housing_data_prep <- housing_data_prep |>
+            dplyr::rename(
+                ausstattung = ausstattungsqualitaet
+            )
+    }
 
     #----------------------------------------------
     # recode categorical variables
 
-    org_data_prep <- org_data_prep |>
-        dplyr::rename(
-            ausstattung = ausstattungsqualitaet
-        ) |>
+    housing_data_prep <- housing_data_prep |>
         dplyr::mutate(
             ausstattung = dplyr::case_when(
                 ausstattung == "Einfach" ~ 1,
@@ -243,8 +312,8 @@ clean_org_data <- function(org_data_expanded = NA, current_delivery = NA, max_ye
                 (ausstattung == "Keine Angabe" |
                     ausstattung == "keine Angabe" |
                     ausstattung == "keine Angaben"
-                    ) ~ -7,
-                TRUE ~ -9
+                    ) ~ helpers_missing_values()[["not_specified"]],
+                TRUE ~ helpers_missing_values()[["other"]]
             ),
             energieeffizienzklasse = dplyr::case_when(
                 energieeffizienzklasse == "A_PLUS" ~ 1,
@@ -259,8 +328,8 @@ clean_org_data <- function(org_data_expanded = NA, current_delivery = NA, max_ye
                 (energieeffizienzklasse == "Keine Angabe" |
                     energieeffizienzklasse == "keine Angabe" |
                     energieeffizienzklasse == "keine Angaben"
-                    ) ~ -7,
-                TRUE ~ -9
+                    ) ~ helpers_missing_values()[["not_specified"]],
+                TRUE ~ helpers_missing_values()[["other"]]
             ),
             energieausweistyp = dplyr::case_when(
                 energieausweistyp == "Endenergiebedarf" ~ 1,
@@ -268,8 +337,8 @@ clean_org_data <- function(org_data_expanded = NA, current_delivery = NA, max_ye
                 (energieausweistyp == "Keine Angabe" |
                     energieausweistyp == "keine Angabe" |
                     energieausweistyp == "keine Angaben"
-                    ) ~ -7,
-                TRUE ~ -9
+                    ) ~ helpers_missing_values()[["not_specified"]],
+                TRUE ~ helpers_missing_values()[["other"]]
             ),
             heizungsart = dplyr::case_when(
                 heizungsart == "Blockheizkraftwerke" ~ 1,
@@ -288,8 +357,8 @@ clean_org_data <- function(org_data_expanded = NA, current_delivery = NA, max_ye
                 (heizungsart == "Keine Angabe" |
                     heizungsart == "keine Angabe" |
                     heizungsart == "keine Angaben"
-                    ) ~ -7,
-                TRUE ~ -9
+                    ) ~ helpers_missing_values()[["not_specified"]],
+                TRUE ~ helpers_missing_values()[["other"]]
             ),
             kategorie_business = dplyr::case_when(
                 objektkategorie2 == "Buero- und Geschaeftsgebaeude" ~ 1,    
@@ -348,8 +417,8 @@ clean_org_data <- function(org_data_expanded = NA, current_delivery = NA, max_ye
                 (objektkategorie2 == "Keine Angabe" |
                     objektkategorie2 == "keine Angabe" |
                     objektkategorie2 == "keine Angaben"
-                    ) ~ -7,
-                TRUE ~ -9
+                    ) ~ helpers_missing_values()[["not_specified"]],
+                TRUE ~ helpers_missing_values()[["other"]]
             ),
             objektzustand = dplyr::case_when(
                 objektzustand == "Erstbezug" ~ 1,
@@ -365,8 +434,8 @@ clean_org_data <- function(org_data_expanded = NA, current_delivery = NA, max_ye
                 (objektzustand == "Keine Angabe" |
                     objektzustand == "keine Angabe" |
                     objektzustand == "keine Angaben"
-                    ) ~ -7,
-                TRUE ~ -9
+                    ) ~ helpers_missing_values()[["not_specified"]],
+                TRUE ~ helpers_missing_values()[["other"]]
             ),
             immobilientyp = dplyr::case_when(
                 immobilientyp == "Buero_Praxis" ~ 1,
@@ -377,13 +446,47 @@ clean_org_data <- function(org_data_expanded = NA, current_delivery = NA, max_ye
                 (immobilientyp == "Keine Angabe" |
                     immobilientyp == "keine Angabe" |
                     immobilientyp == "keine Angaben"
-                    ) ~ -7,
-                TRUE ~ -9
+                    ) ~ helpers_missing_values()[["not_specified"]],
+                TRUE ~ helpers_missing_values()[["other"]]
             )
         ) |>
         # remove objektkategorie because its an integer in kategorie_business now
         dplyr::select(-objektkategorie2)
 
+    #--------------------------------------------------
+    # checks for recoding
+    # if variables have the same values, they are recoded
+    # NOTE: use original data for this check (i.e. without recoding)
+
+    # function to avoid repetition
+    recoding_length_check <- function(var, expected_unique_values) {
+        #' @description Function to check if a variable has the expected number of
+        #' unique values. Otherwise, recoding needs to be adjusted.
+        #' 
+        #' @param var Name of the variable to be checked.
+        #' @param expected_unique_values Expected number of unique values.
+        
+        #--------------------------------------------------
+        targets::tar_assert_true(
+            length(unique(housing_data[[var]])) == expected_unique_values,
+            msg = glue::glue(
+                "!!! WARNING ",
+                "Variable {var} contains unexpected values. ",
+                "Please check the data and recode if necessary."
+            )
+        )
+    }
+
+    # check recoding
+    recoding_length_check("ausstattung", 5)
+    recoding_length_check("energieeffizienzklasse", 10)
+    recoding_length_check("energieausweistyp", 3)
+    recoding_length_check("heizungsart", 14)
+    recoding_length_check("kategorie_business", 54)
+    recoding_length_check("objektzustand", 11)
+    recoding_length_check("immobilientyp", 6)
+
+    # CONTINUE
     #----------------------------------------------
     # issue of rent
     # explanation: for commercial data its possible to provide information
@@ -394,19 +497,23 @@ clean_org_data <- function(org_data_expanded = NA, current_delivery = NA, max_ye
     # a monthly value
     # See also Email Kehlert 01.08.2023 (store in documentation/infos/Lieferung_2023)
 
-    org_data_prep <- org_data_prep |>
-        dplyr::rename(
-            miete_proqm = mieteproqm
-        ) |>
+    if ("mieteproqm" %in% names(housing_data_prep)) {
+        housing_data_prep <- housing_data_prep |>
+            dplyr::rename(
+                miete_proqm = mieteproqm
+            )
+    }
+
+    housing_data_prep <- housing_data_prep |>
         dplyr::mutate(
             # separate nebenkosten from nebenkosten per square meter if "per
             # square meter" option is selected
             nebenkosten_proqm = dplyr::case_when(
                 !is.na(miete_proqm) ~ nebenkosten,
-                TRUE ~ -9
+                TRUE ~ helpers_missing_values()[["other"]]
             ),
             nebenkosten = dplyr::case_when(
-                !is.na(miete_proqm) ~ -9,
+                !is.na(miete_proqm) ~ helpers_missing_values()[["other"]],
                 TRUE ~ nebenkosten
             ), 
             # censor implausible values for square meter variables
@@ -415,20 +522,28 @@ clean_org_data <- function(org_data_expanded = NA, current_delivery = NA, max_ye
             # square meter"
             nebenkosten_proqm = dplyr::case_when(
                 nebenkosten_proqm <= as.numeric(quantile(
-                    nebenkosten_proqm[(nebenkosten_proqm != -9)], prob = 0.1, na.rm = TRUE)
-                ) ~ -5,
+                    nebenkosten_proqm[(nebenkosten_proqm != helpers_missing_values()[["other"]])],
+                    prob = 0.1,
+                    na.rm = TRUE
+                )) ~ helpers_missing_values()[["implausible"]],
                 nebenkosten_proqm >= as.numeric(quantile(
-                    nebenkosten_proqm[(nebenkosten_proqm != -9)], prob = 0.95, na.rm = TRUE)
-                ) ~ -5,
+                    nebenkosten_proqm[(nebenkosten_proqm != helpers_missing_values()[["other"]])],
+                    prob = 0.95,
+                    na.rm = TRUE
+                )) ~ helpers_missing_values()[["implausible"]],
                 TRUE ~ nebenkosten_proqm
             ),
             miete_proqm = dplyr::case_when(
                 miete_proqm <= as.numeric(quantile(
-                    miete_proqm[(miete_proqm != -9)], prob = 0.1, na.rm = TRUE)
-                ) ~ -5,
+                    miete_proqm[(miete_proqm != helpers_missing_values()[["other"]])],
+                    prob = 0.1,
+                    na.rm = TRUE
+                )) ~ helpers_missing_values()[["implausible"]],
                 miete_proqm >= as.numeric(quantile(
-                    miete_proqm[(miete_proqm != -9)], prob = 0.99, na.rm = TRUE)
-                ) ~ -5,
+                    miete_proqm[(miete_proqm != helpers_missing_values()[["other"]])],
+                    prob = 0.99,
+                    na.rm = TRUE
+                )) ~ helpers_missing_values()[["implausible"]],
                 TRUE ~ miete_proqm
             )
         )
@@ -447,7 +562,7 @@ clean_org_data <- function(org_data_expanded = NA, current_delivery = NA, max_ye
         "nebenkosten"
     )
 
-    org_data_prep <- org_data_prep |>
+    housing_data_prep <- housing_data_prep |>
         dplyr::mutate(
             # make sure that the variables are numeric
             dplyr::across(
@@ -458,43 +573,69 @@ clean_org_data <- function(org_data_expanded = NA, current_delivery = NA, max_ye
                 .cols = cols,
                 # dropping values below the 0.1 percentile and above the 99.9 percentile
                 ~ dplyr::case_when(
-                    .x <= as.numeric(quantile(.x[(.x != -9)], prob = 0.001, na.rm = TRUE)) ~ -5,
-                    .x >= as.numeric(quantile(.x[(.x != -9)], prob = 0.999, na.rm = TRUE)) ~ -5,
+                    .x <= as.numeric(quantile(
+                        .x[(.x != helpers_missing_values()[["other"]])],
+                        prob = 0.001,
+                        na.rm = TRUE
+                    )) ~ helpers_missing_values()[["implausible"]],
+                    .x >= as.numeric(quantile(
+                        .x[(.x != helpers_missing_values()[["other"]])],
+                        prob = 0.999,
+                        na.rm = TRUE
+                    )) ~ helpers_missing_values()[["implausible"]],
                     TRUE ~ .x
                 )
             ),
             letzte_modernisierung = dplyr::case_when(
                 # censor if last renovation is in the future
-                letzte_modernisierung > max_year ~ -5,
-                # censor if last renovation is far back (before 1800)
-                letzte_modernisierung >= 0 & letzte_modernisierung < 1800 ~ -5,
-                is.na(letzte_modernisierung) ~ -9,
+                letzte_modernisierung > config_globals()[["max_year"]] ~ helpers_missing_values()[["implausible"]],
+                # censor if last renovation is far back
+                letzte_modernisierung >= 0 & letzte_modernisierung < helpers_implausible_values()[["last_renovation_max_value"]] ~ helpers_missing_values()[["implausible"]],
+                is.na(letzte_modernisierung) ~ helpers_missing_values()[["other"]],
                 TRUE ~ letzte_modernisierung
             ),
             baujahr = dplyr::case_when(
                 # censor if construction year is far back (before 1000)
-                baujahr >= 0 & baujahr < 1000 ~ -5,
+                baujahr >= 0 & baujahr < helpers_implausible_values()[["construction_year_max_value"]] ~ helpers_missing_values()[["implausible"]],
                 # censor if construction year is in the future
-                baujahr > max_year ~ -5,
-                is.na(baujahr) ~ -9,
+                baujahr > config_globals()[["max_year"]] ~ helpers_missing_values()[["implausible"]],
+                is.na(baujahr) ~ helpers_missing_values()[["other"]],
                 TRUE ~ baujahr
             ),
             plz = dplyr::case_when(
                 # censor if zip code is not complete
-                nchar(plz) == 4 ~ "-9",
+                nchar(plz) == 4 ~ as.character(
+                    helpers_missing_values()[["implausible"]]
+                ),
                 TRUE ~ plz
             )
         )
 
-    #----------------------------------------------
+    #--------------------------------------------------
+    # checks
+
+    # check that plz only has three different character lengths
+    # otherwise the recoding is incomplete
+    # NOTE: check based on raw data since the recoding is already applied for
+    # prepared data
+    targets::tar_assert_true(
+        length(unique(nchar(housing_data$plz))) == 3,
+        msg = glue::glue(
+            "!!! WARNING:
+            Variable plz contains unexpected values. ",
+            "Please check the data and recode if necessary."
+        )
+    )
+    
+    #--------------------------------------------------
     # fix other things
 
-    org_data_prep <- org_data_prep |>
+    housing_data_prep <- housing_data_prep |>
         dplyr::mutate(
             # in few cases there is a rent and a price given
             # if they are equal its clearly a mistake (set to missing)
             kaufpreis = dplyr::case_when(
-                mietekalt == kaufpreis ~ -9,
+                mietekalt == kaufpreis ~ helpers_missing_values()[["other"]],
                 TRUE ~ kaufpreis
             ),
             # fix zip code
@@ -512,27 +653,12 @@ clean_org_data <- function(org_data_expanded = NA, current_delivery = NA, max_ye
         ) 
 
     #----------------------------------------------
-    # generate spell
-
-    org_data_prep <- org_data_prep |>
-        # sort by obid and timing
-        dplyr::arrange(obid, ajahr, amonat, ejahr, emonat) |>
-        # after sorting stay within the obid (i.e. grouped)
-        dplyr::group_by(obid)  |>
-        # generate counting variable for group
-        dplyr::mutate(
-            spell = seq(1, n())
-        ) |>
-        # ungroup to prevent potential issues in further steps
-        dplyr::ungroup()
-
-    #----------------------------------------------
     # fix etage
     # problem: sometimes there is a specific number given but sometimes
     # there is also a range given
     # fix the specific numbers (i.e. where it is clear which floor) but
     # keep the ranges (researcher has to decide what this should be)
-    org_data_prep <- org_data_prep |>
+    housing_data_prep <- housing_data_prep |>
         dplyr::mutate(
             # replace some common strings
             # this helps with the next step to turn them into numbers
@@ -618,17 +744,17 @@ clean_org_data <- function(org_data_expanded = NA, current_delivery = NA, max_ye
     # sometimes it is already correct by forcing it here again
 
     # integer columns
-    bef_cols <- org_data_prep |>
-        dplyr::select(starts_with("bef")) |>
+    bef_cols <- housing_data_prep |>
+        dplyr::select(dplyr::starts_with("bef")) |>
         names()
     
     int_cols <- c(
         "obid", "version", "koid", "laid", "skid_id", "sc_id",
-        "anbieter", "duplicateid", "nebenraeume", "letzte_modernisierung",
+        "anbieter", "duplicateid", "letzte_modernisierung",
         "baujahr", "blid", "immobilientyp", "objektzustand", "ausstattung",
-        "betreut", "heizungsart", "energieausweistyp", "energieeffizienzklasse",
+        "heizungsart", "energieausweistyp", "energieeffizienzklasse",
         "ejahr", "emonat", "ajahr", "amonat", "kategorie_business", 
-        "laufzeittage", "gkz", "heizkosten_in_wm_enthalten", "spell",
+        "laufzeittage", "gkz", "heizkosten_in_wm_enthalten",
         "bauphase", "kaufvermietet", "haustier_erlaubt", bef_cols
     )
 
@@ -648,42 +774,57 @@ clean_org_data <- function(org_data_expanded = NA, current_delivery = NA, max_ye
     )
 
     for (col in int_cols) {
-        if (col %in% names(org_data_prep)) {
-            org_data_prep[[col]] <- as.integer(org_data_prep[[col]])
+        if (col %in% names(housing_data_prep)) {
+            housing_data_prep[[col]] <- as.integer(housing_data_prep[[col]])
         } else {
-            org_data_prep[[col]] <- -9
+            housing_data_prep[[col]] <- helpers_missing_values()[["other"]]
         }
     }
 
     for (col in num_cols) {
-        if (col %in% names(org_data_prep)) {
-            org_data_prep[[col]] <- as.numeric(org_data_prep[[col]])
+        if (col %in% names(housing_data_prep)) {
+            housing_data_prep[[col]] <- as.numeric(housing_data_prep[[col]])
         } else {
-            org_data_prep[[col]] <- -9
+            housing_data_prep[[col]] <- helpers_missing_values()[["other"]]
         }
     }
 
     for (col in char_cols) {
-        if (col %in% names(org_data_prep)) {
-            org_data_prep[[col]] <- as.character(org_data_prep[[col]])
+        if (col %in% names(housing_data_prep)) {
+            housing_data_prep[[col]] <- as.character(housing_data_prep[[col]])
         } else {
-            org_data_prep[[col]] <- "-9"
+            housing_data_prep[[col]] <- as.character(helpers_missing_values()[["other"]])
         }
     }
 
     #----------------------------------------------
     # replace missings according to type
+    # NOTE: serves as check if not already recoded befor
 
-    org_data_prep <- org_data_prep |>
-        dplyr::mutate_if(is.integer, replace_na, replace = -9) |>
-        dplyr::mutate_if(is.numeric, replace_na, replace = -9)  |>
-        dplyr::mutate_if(is.character, replace_na, replace = "-9")
+    housing_data_prep <- housing_data_prep |>
+        dplyr::mutate_if(
+            is.integer,
+            replace_na,
+            replace = helpers_missing_values()[["other"]]
+        ) |>
+        dplyr::mutate_if(
+            is.numeric,
+            replace_na,
+            replace = helpers_missing_values()[["other"]]
+        )  |>
+        dplyr::mutate_if(
+            is.character,
+            replace_na,
+            replace = as.character(
+                helpers_missing_values()[["other"]]
+            )
+        )
 
     #----------------------------------------------
     # export
 
     fst::write.fst(
-        org_data_prep,
+        housing_data_prep,
         file.path(
             config_paths()[["data_path"]],
             "processed",
@@ -695,5 +836,5 @@ clean_org_data <- function(org_data_expanded = NA, current_delivery = NA, max_ye
     #----------------------------------------------
     # return
 
-    return(org_data_prep)
+    return(housing_data_prep)
 }
