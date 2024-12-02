@@ -53,6 +53,13 @@ reading_geo_data <- function(
             dplyr::select(
                 AGS, GEN, geometry
             ) |>
+            # take care of special characters
+            dplyr::mutate(
+                GEN = stringi::stri_trans_general(
+                    GEN,
+                    "de-ASCII; Latin-ASCII"
+                )
+            ) |>
             # rename AGS
             dplyr::rename(
                 !!rlang::sym(ags_name) := AGS,
