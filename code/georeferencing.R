@@ -1,173 +1,46 @@
-georeferencing <- function(org_data_cleaned = org_data_cleaned) {
+georeferencing <- function(
+    housing_data = NA,
+    spatial_data_grids = NA,
+    spatial_data_zip_code = NA,
+    spatial_data_municipality = NA,
+    spatial_data_district = NA
+) {
     #' @title Geocoding the RED observations
     #' 
     #' @description This function transforms the giving reference system into the
     #' standard reference systems of GPS and UTM.
     #' 
-    #' @param org_data_cleaned Prepared original data
+    #' @param housing_data Prepared housing data
+    #' @param spatial_data_grids Spatial data of the grids
+    #' @param spatial_data_zip_code Spatial data of the zip codes
+    #' @param spatial_data_municipality Spatial data of the municipalities
+    #' @param spatial_data_district Spatial data of the districts
     #' 
     #' @return DataFrame
     #' @author Patrick Thiel
 
     #----------------------------------------------
-    # function for reading data
-
-    read_geo_data <- function(
-        disgem = c("Kreis", "Gemeinde", "PLZ"),
-        year = 2019,
-        ags_name = NA,
-        gen_name = NA
-    ) {
-        #' @title Read in district shape data
-        #' 
-        #' @param disgem Indicator for district or municipality data
-        #' @param year Year of district shape data
-        #' @param ags_name How AGS should be renamed after reading
-        #' @param gen_name How GEN should be renamed after reading
-        
-        #----------------------------------------------
-        # abbreviation for district or municipality
-        if (disgem == "Kreis") {
-            filename <- "VG250_KRS"
-            region <- disgem
-        } else if (disgem == "Gemeinde") {
-            filename <- "VG250_GEM"
-            region <- disgem
-        } else {
-            filename <- "PLZ"
-            region <- "Postleitzahl"
-        }
-
-        # read data
-        dta <- sf::st_read(
-            file.path(
-                config_paths()[["gebiete_path"]],
-                region,
-                year,
-                paste0(filename, ".shp")
-            ),
-            quiet = TRUE
-        )
-
-        if (disgem != "PLZ") {
-            dta <- dta |>
-                # keep only AGS and geometry columns
-                dplyr::select(
-                    AGS, GEN, geometry
-                ) |>
-                # rename AGS
-                dplyr::rename(
-                    !!rlang::sym(ags_name) := AGS,
-                    !!rlang::sym(gen_name) := GEN
-                )
-        } else {
-            dta <- dta |>
-                dplyr::rename(
-                    !!rlang::sym(ags_name) := PLZ
-                )
-        }
-
-        # convert factors
-        dta |>
-            dplyr::mutate_if(is.factor, as.character) -> dta
-
-        # transform to UTM
-        dta <- sf::st_transform(
-            dta,
-            crs = config_globals()[["utmcrs"]]
-        )
-
-        #----------------------------------------------
-        # return output
-
-        return(dta)
-    }
-
-    #----------------------------------------------
-    # district data
-
-    # apply function
-    KRS_2019 <- read_geo_data(
-        disgem = "Kreis",
-        year = 2019,
-        ags_name = "kid2019",
-        gen_name = "kname2019"
-    )
-
-    #----------------------------------------------
-    # muncipality data
-
-    GEM_2019 <- read_geo_data(
-        disgem = "Gemeinde",
-        year = 2019,
-        ags_name = "gid2019",
-        gen_name = "gname2019"
-    )
-
-    #----------------------------------------------
-    # zipcode data
-
-    PLZ_2019 <- read_geo_data(
-        disgem = "PLZ",
-        year = 2019,
-        ags_name = "plz2019"
-    )
-
-    #----------------------------------------------
-    # grid data
-
-    # load data
-    grids <- sf::st_read(
-        file.path(
-            config_paths()[["gebiete_path"]],
-            "Raster",
-            "grids_BRD.shp"
-        ),
-        quiet = TRUE
-    ) |>
-    # keep only grid ID and geometry columns
-    dplyr::select(
-        idm, geometry
-    )
-
-    # factor as character (turns the data set into characters)
-    grids <- grids |>
-        dplyr::mutate_if(
-            is.factor,
-            as.character
-        )
-
-    # transform 
-    grids <- sf::st_transform(
-        grids,
-        crs = config_globals()[["utmcrs"]]
-    )
-
-    #----------------------------------------------
     # split housing data into consisting coordinates and without coordinates
     # because geo-referencing does not work with missings in coordinates
 
-    org_data_wo_coords <- org_data_cleaned |>
+    housing_data_wo_coords <- housing_data |>
         dplyr::filter(
-            geox == -9
+            geox == helpers_missing_values()[["other"]]
         )
 
-    org_data_coords <- org_data_cleaned |>
+    housing_data_coords <- housing_data |>
         dplyr::filter(
-            geox != -9
+            geox != helpers_missing_values()[["other"]]
         )
     
     #----------------------------------------------
     # transform the coordinate system of the Immo data
 
-    # this is the projection Immoscout uses
-    projection_immo <- "+proj=lcc +lat_1=40 +lat_2=60 +lat_0=30 +lon_0=10 +x_0=0 +y_0=0 +datum=WGS84 +units=m +no_defs"
-
     # define as spatial data
-    org_data_sf <- sf::st_as_sf(
-        org_data_coords,
+    housing_data_sf <- sf::st_as_sf(
+        housing_data_coords,
         coords = c("geox", "geoy"),
-        crs = projection_immo,
+        crs = config_globals()[["projection_immo"]],
         remove = FALSE
     )
 
@@ -176,7 +49,7 @@ georeferencing <- function(org_data_cleaned = org_data_cleaned) {
 
     # transform to GPS
     lonlat_gps <- sf::st_transform(
-        org_data_sf,
+        housing_data_sf,
         crs = config_globals()[["gpscrs"]]
     )
 
@@ -202,8 +75,8 @@ georeferencing <- function(org_data_cleaned = org_data_cleaned) {
         )
 
     # merge to original data
-    org_data_sf <- cbind(
-        org_data_sf,
+    housing_data_sf <- cbind(
+        housing_data_sf,
         coords_gps
     )
 
@@ -212,7 +85,7 @@ georeferencing <- function(org_data_cleaned = org_data_cleaned) {
 
     # transform to UTM
     lonlat_utm <- sf::st_transform(
-        org_data_sf,
+        housing_data_sf,
         crs = config_globals()[["utmcrs"]]
     )
 
@@ -225,20 +98,20 @@ georeferencing <- function(org_data_cleaned = org_data_cleaned) {
         )
 
     # merge to original data
-    org_data_sf <- cbind(
-        org_data_sf,
+    housing_data_sf <- cbind(
+        housing_data_sf,
         coords_utm
     )
 
     # remove geometry from data
-    org_data_sf <- sf::st_drop_geometry(org_data_sf)
+    housing_data_sf <- sf::st_drop_geometry(housing_data_sf)
 
     #----------------------------------------------
     # Merge other geo data
 
     # make point locations spatial data based on UTM
-    org_data_sf <- sf::st_as_sf(
-        org_data_sf,
+    housing_data_sf <- sf::st_as_sf(
+        housing_data_sf,
         coords = c("lon_utm", "lat_utm"),
         crs = config_globals()[["utmcrs"]],
         remove = FALSE
@@ -246,9 +119,9 @@ georeferencing <- function(org_data_cleaned = org_data_cleaned) {
 
     # add districts
     suppressWarnings(
-        org_data_sf <- sf::st_join(
-            org_data_sf,
-            KRS_2019,
+        housing_data_sf <- sf::st_join(
+            housing_data_sf,
+            spatial_data_district,
             left = TRUE,
             largest = TRUE
         )
@@ -256,9 +129,9 @@ georeferencing <- function(org_data_cleaned = org_data_cleaned) {
 
     # add municipalities
     suppressWarnings(
-        org_data_sf <- sf::st_join(
-            org_data_sf,
-            GEM_2019,
+        housing_data_sf <- sf::st_join(
+            housing_data_sf,
+            spatial_data_municipality,
             left = TRUE,
             largest = TRUE
         )
@@ -266,9 +139,9 @@ georeferencing <- function(org_data_cleaned = org_data_cleaned) {
 
     # add zipcodes
     suppressWarnings(
-        org_data_sf <- sf::st_join(
-            org_data_sf,
-            PLZ_2019,
+        housing_data_sf <- sf::st_join(
+            housing_data_sf,
+            spatial_data_zip_code,
             left = TRUE,
             largest = TRUE
         )
@@ -276,19 +149,19 @@ georeferencing <- function(org_data_cleaned = org_data_cleaned) {
 
     # add grid
     suppressWarnings(
-        org_data_sf <- sf::st_join(
-            org_data_sf,
-            grids,
+        housing_data_sf <- sf::st_join(
+            housing_data_sf,
+            spatial_data_grids,
             left = TRUE,
             largest = TRUE
         )
     )
 
     # drop geometry
-    org_data_prep <- sf::st_drop_geometry(org_data_sf)
+    housing_data_prep <- sf::st_drop_geometry(housing_data_sf)
 
     # replace missing coordinates (not in Germany)
-    org_data_prep <- org_data_prep |>
+    housing_data_prep <- housing_data_prep |>
         dplyr::mutate(
             dplyr::across(
                 .cols = c(
@@ -296,15 +169,15 @@ georeferencing <- function(org_data_cleaned = org_data_cleaned) {
                     "lat_utm", "lon_utm"
                 ),
                 ~ dplyr::case_when(
-                    is.na(gid2019) ~ -9,
+                    is.na(gid2019) ~ helpers_missing_values()[["other"]],
                     TRUE ~ .x
                 )
             ),
-            idm = tidyr::replace_na(idm, "-9")
+            idm = tidyr::replace_na(idm, as.character(helpers_missing_values()[["other"]]))
         )
 
     # set types and names
-    org_data_prep <- org_data_prep |>
+    housing_data_prep <- housing_data_prep |>
         dplyr::mutate(
             ergg_1km = as.character(idm),
             dplyr::across(
@@ -322,7 +195,7 @@ georeferencing <- function(org_data_cleaned = org_data_cleaned) {
     # NOTE: filling algorithm uses the given information first and the
     # information from the spatial join second
 
-    org_data_prep <- org_data_prep |>
+    housing_data_prep <- housing_data_prep |>
         dplyr::mutate(
             blid = as.character(blid),
             blid = dplyr::case_when(
@@ -331,7 +204,7 @@ georeferencing <- function(org_data_cleaned = org_data_cleaned) {
             ),
             # recode proper NA for foalesce to work
             blid = dplyr::case_when(
-                blid == "-9" ~ NA_character_,
+                blid == as.character(helpers_missing_values()[["other"]]) ~ NA_character_,
                 TRUE ~ blid
             ),
             blid_aux = substring(gid2019, 1, 2),
@@ -339,27 +212,30 @@ georeferencing <- function(org_data_cleaned = org_data_cleaned) {
             blid = data.table::fcoalesce(blid, blid_aux),
             # do the same for zipcodes
             plz = dplyr::case_when(
-                plz == "-9" ~ NA_character_,
+                plz == as.character(helpers_missing_values()[["other"]]) ~ NA_character_,
                 TRUE ~ plz
             ),
             plz = data.table::fcoalesce(plz, plz2019)
         ) |>
         dplyr::select(-c(blid_aux, plz2019)) |>
         # recode missings again to match missing definition of REDC/RED
-        tidyr::replace_na(list(blid = "-9", plz = "-9"))
+        tidyr::replace_na(list(
+            blid = as.character(helpers_missing_values()[["other"]]),
+            plz = as.character(helpers_missing_values()[["other"]])
+        ))
 
     #----------------------------------------------
     # fill municipality and district ID
     # NOTE: filling algorithm uses the given information first and the
     # information from the spatial join second
 
-    org_data_prep <- org_data_prep |>
+    housing_data_prep <- housing_data_prep |>
         dplyr::mutate(
             # generate helper variables for municipality ID using
             # the given Immo information
             gid2019_aux = as.character(gkz),
             gid2019_aux = dplyr::case_when(
-                gid2019_aux == "-9" ~ NA_character_,
+                gid2019_aux == as.character(helpers_missing_values()[["other"]]) ~ NA_character_,
                 TRUE ~ gid2019_aux
             ),
             gid2019_aux = dplyr::case_when(
@@ -384,13 +260,13 @@ georeferencing <- function(org_data_cleaned = org_data_cleaned) {
     #----------------------------------------------
     # add geo IDs to the data set with no coordinates
 
-    org_data_wo_coords <- org_data_wo_coords |>
+    housing_data_wo_coords <- housing_data_wo_coords |>
         dplyr::mutate(
-            lon_gps = -9,
-            lat_gps = -9,
-            lon_utm = -9,
-            lat_utm = -9,
-            ergg_1km = "-9",
+            lon_gps = helpers_missing_values()[["other"]],
+            lat_gps = helpers_missing_values()[["other"]],
+            lon_utm = helpers_missing_values()[["other"]],
+            lat_utm = helpers_missing_values()[["other"]],
+            ergg_1km = as.character(helpers_missing_values()[["other"]]),
             # use the given municipality information to add municipality and
             # district ID inline with the data set with coordinates
             gid2019 = as.character(gkz),
@@ -411,18 +287,18 @@ georeferencing <- function(org_data_cleaned = org_data_cleaned) {
         )
 
     # merge municipality names
-    org_data_wo_coords <- merge(
-        org_data_wo_coords,
-        GEM_2019 |>
+    housing_data_wo_coords <- merge(
+        housing_data_wo_coords,
+        spatial_data_municipality |>
             sf::st_drop_geometry(),
         by = "gid2019",
         all.x = TRUE
     )
 
     # merge district names
-    org_data_wo_coords <- merge(
-        org_data_wo_coords,
-        KRS_2019 |>
+    housing_data_wo_coords <- merge(
+        housing_data_wo_coords,
+        spatial_data_district |>
             sf::st_drop_geometry(),
         by = "kid2019",
         all.x = TRUE
@@ -431,23 +307,23 @@ georeferencing <- function(org_data_cleaned = org_data_cleaned) {
     #----------------------------------------------
     # combine both data sets again (with and without coordinates)
 
-    org_data_prep <- dplyr::bind_rows(
-        org_data_prep,
-        org_data_wo_coords
+    housing_data_prep <- dplyr::bind_rows(
+        housing_data_prep,
+        housing_data_wo_coords
     )
     
     #----------------------------------------------
     # drop given municipality information
     # because not needed anymore (incorparated in the other spatial IDs)
 
-    org_data_prep <- org_data_prep |>
+    housing_data_prep <- housing_data_prep |>
         dplyr::select(-gkz)
 
     #----------------------------------------------
     # export
 
     fst::write.fst(
-        org_data_prep,
+        housing_data_prep,
         file.path(
             config_paths()[["data_path"]],
             "processed",
@@ -459,5 +335,5 @@ georeferencing <- function(org_data_cleaned = org_data_cleaned) {
     #----------------------------------------------
     # return output
 
-    return(org_data_prep)
+    return(housing_data_prep)
 }
