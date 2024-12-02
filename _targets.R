@@ -235,8 +235,8 @@ targets_preparation <- rlang::list2(
 
 targets_append <- rlang::list2(
     tar_target(
-        org_data_append,
-        append_waves(
+        housing_data_appended,
+        appending_waves(
             deliveries = config_globals()[["deliveries"]]
         )
     )
@@ -289,7 +289,7 @@ rlang::list2(
     targets_files,
     targets_reading,
     targets_preparation,
-    # targets_append,
+    targets_append,
     #t argets_combine_cleaning,
     targets_pipeline_stats
 )
