@@ -218,13 +218,16 @@ targets_preparation <- rlang::list2(
             )
         )
     ),
-    # CONTINUE
-    # tar_target(
-    #     org_data_geo,
-    #     georeferencing(
-    #         org_data_cleaned = org_data_cleaned
-    #     )
-    # )
+    tar_target(
+        org_data_geo,
+        georeferencing_housing_data(
+            housing_data = org_data_cleaned,
+            spatial_data_grids = spatial_data_grids,
+            spatial_data_zip_code = spatial_data_zip_code,
+            spatial_data_municipality = spatial_data_municipality,
+            spatial_data_district = spatial_data_district
+        )
+    )
 )
 
 #--------------------------------------------------
