@@ -1,0 +1,35 @@
+appending_waves <- function(deliveries = NA) {
+    #' @title Combining deliveries
+    #' 
+    #' @description This function combines all deliveries into one data set.
+    #' 
+    #' @param deliveries List with all deliveries
+    #' 
+    #' @return Dataframe, combined data set
+    #' @author Patrick Thiel
+    
+    #--------------------------------------------------
+    # read all data
+
+    data_storage <- list()
+    for (del in deliveries) {
+        dta <- fst::read.fst(
+            file.path(
+                config_paths()[["data_path"]],
+                "processed",
+                paste0("Lieferung_", del),
+                "clean_data_georeferenced.fst"
+            )
+        )
+
+        data_storage[[del]] <- dta
+    }
+
+    # append all data
+    dta_append <- data.table::rbindlist(data_storage, fill = TRUE)
+
+    #--------------------------------------------------
+    # return
+
+    return(dta_append)
+}
