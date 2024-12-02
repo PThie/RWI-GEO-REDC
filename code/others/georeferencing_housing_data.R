@@ -1,4 +1,4 @@
-georeferencing <- function(
+georeferencing_housing_data <- function(
     housing_data = NA,
     spatial_data_grids = NA,
     spatial_data_zip_code = NA,
