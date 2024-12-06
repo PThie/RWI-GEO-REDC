@@ -218,7 +218,7 @@ cleaning_org_data <- function(
         if (!var %in% c(
             "is24_stadt_kreis", "kreis", "is24_bezirk_gemeinde",
             "is24_bundesland", "skid", "bgid", "objekt_beschreibung",
-            "einstelldatum"
+            "einstelldatum", "version"
         )) {
             targets::tar_assert_true(
                 # length(unique(housing_data_prep[[var]])) == 1,
@@ -789,26 +789,34 @@ cleaning_org_data <- function(
     )
 
     for (col in int_cols) {
-        if (col %in% names(housing_data_prep)) {
-            housing_data_prep[[col]] <- as.integer(housing_data_prep[[col]])
-        } else {
-            housing_data_prep[[col]] <- helpers_missing_values()[["other"]]
+        # NOTE: ignore columns that have been deleted. Otherwise, they would be
+        # added here again
+        if (!col %in% helpers_deleted_variables()) {
+            if (col %in% names(housing_data_prep)) {
+                housing_data_prep[[col]] <- as.integer(housing_data_prep[[col]])
+            } else {
+                housing_data_prep[[col]] <- helpers_missing_values()[["other"]]
+            }
         }
     }
 
     for (col in num_cols) {
-        if (col %in% names(housing_data_prep)) {
-            housing_data_prep[[col]] <- as.numeric(housing_data_prep[[col]])
-        } else {
-            housing_data_prep[[col]] <- helpers_missing_values()[["other"]]
+        if (!col %in% helpers_deleted_variables()) {
+            if (col %in% names(housing_data_prep)) {
+                housing_data_prep[[col]] <- as.numeric(housing_data_prep[[col]])
+            } else {
+                housing_data_prep[[col]] <- helpers_missing_values()[["other"]]
+            }
         }
     }
 
     for (col in char_cols) {
-        if (col %in% names(housing_data_prep)) {
-            housing_data_prep[[col]] <- as.character(housing_data_prep[[col]])
-        } else {
-            housing_data_prep[[col]] <- as.character(helpers_missing_values()[["other"]])
+        if (!col %in% helpers_deleted_variables()) {
+            if (col %in% names(housing_data_prep)) {
+                housing_data_prep[[col]] <- as.character(housing_data_prep[[col]])
+            } else {
+                housing_data_prep[[col]] <- as.character(helpers_missing_values()[["other"]])
+            }
         }
     }
 
