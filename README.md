@@ -1,6 +1,6 @@
 # RWI-GEO-REDC - A data set of commerial housing data
 
-> [!NOTE]  
+> [!NOTE Note on Something]  
 > Highlights information that users should take into account, even when skimming.
 
 > [!TIP]
