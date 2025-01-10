@@ -57,20 +57,20 @@ creating_folder_structure <- function() {
             )
         }
     }
-  
+
     #--------------------------------------------------
     # create version folder in output
-  
+
     ifelse(
         !dir.exists(
             file.path(
-                config_globals()[["output_path"]],
+                config_paths()[["output_path"]],
                 config_globals()[["current_version"]]
             )
         ),
         yes = dir.create(
             file.path(
-                config_globals()[["output_path"]],
+                config_paths()[["output_path"]],
                 config_globals()[["current_version"]]
             )
         ),
