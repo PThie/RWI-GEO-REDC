@@ -212,6 +212,7 @@ targets_preparation <- rlang::list2(
         org_data_cleaned,
         # suppress warnings because conversion of characters to numeric
         # generates warnings
+        # TODO: Export names and types (?) for checking with next wave
         suppressWarnings(
             cleaning_org_data(
                 housing_data = org_data
@@ -234,7 +235,7 @@ targets_preparation <- rlang::list2(
 # combine each wave
 
 targets_append <- rlang::list2(
-    tar_target(
+    tar_fst(
         housing_data_appended,
         appending_waves(
             deliveries = config_globals()[["deliveries"]]
