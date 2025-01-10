@@ -38,7 +38,8 @@ helpers_deleted_variables <- function() {
         "objekt_beschreibung", # text description of the add removed for now
         "betreut", # not used anymore
         "nebenraeume", # not used in REDC
-        "einstelldatum" # not needed for now
+        "einstelldatum", # not needed for now
+        "version" # not needed and can be easily confused with redc_version
     )
 
     #--------------------------------------------------
