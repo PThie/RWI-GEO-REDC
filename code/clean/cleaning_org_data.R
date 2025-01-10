@@ -11,7 +11,7 @@ cleaning_org_data <- function(
     #' @return DataFrame
     #' @author Patrick Thiel
     
-    #----------------------------------------------
+    #--------------------------------------------------
     # cleaning
     
     # make all names lowercase
@@ -30,11 +30,11 @@ cleaning_org_data <- function(
     # apply cleaning steps
     housing_data_prep <- housing_data |>
         dplyr::mutate(
-            #----------------------------------------------
+            #--------------------------------------------------
             # add current version and delivery (more for internal documentation)
             redc_version = config_globals()[["current_version"]],
             redc_delivery = config_globals()[["current_delivery_counter"]],
-            #----------------------------------------------
+            #--------------------------------------------------
             # split date variable
             # starting year and month
             ajahr = as.numeric(substring(zeitraum, first = 1, last = 4)),
@@ -42,7 +42,7 @@ cleaning_org_data <- function(
             # end year and month
             ejahr = as.numeric(substring(zeitraum, first = 12, last = 15)),
             emonat = as.integer(substring(zeitraum, first = 16, last = 17)),
-            #----------------------------------------------
+            #--------------------------------------------------
             # delivery 2312 has two variables referencing the energy class
             # merge both
             energieeffizienzklasse = dplyr::case_when(
@@ -58,7 +58,7 @@ cleaning_org_data <- function(
             #     energieeffizienz_klasse
             # ),
             # energieeffizienz_klasse = NULL,
-            #----------------------------------------------
+            #--------------------------------------------------
             # fix housing type (remove Umlaute)
             immobilientyp = stringi::stri_trans_general(
                 immobilientyp,
@@ -70,7 +70,7 @@ cleaning_org_data <- function(
                 stringr::fixed(" "),
                 "_"
             ),
-            #----------------------------------------------
+            #--------------------------------------------------
             # fix anbietertyp (remove Umlaute)
             anbietertyp = stringi::stri_trans_general(
                 anbietertyp,
@@ -89,13 +89,13 @@ cleaning_org_data <- function(
                 anbietertyp == "unbekannt" ~ 9
             ),
             anbieter = as.integer(anbieter),
-            #----------------------------------------------
+            #--------------------------------------------------
             # fix objektkategorie2 (remove Umlaute)
             objektkategorie2 = stringi::stri_trans_general(
                 objektkategorie2,
                 "de-ASCII; Latin-ASCII"
             ),
-            #----------------------------------------------
+            #--------------------------------------------------
             # replace NAs in befeuerungsarten
             befeuerungsarten = dplyr::case_when(
                 befeuerungsarten == "" ~ NA_character_,
@@ -107,7 +107,7 @@ cleaning_org_data <- function(
             # "insert NAs because of coercion to numeric" which crashes the
             # pipeline
             bef1 = dplyr::case_when(
-                stringr::str_detect(befeuerungsarten, "|") ~ NA_character_,
+                stringr::str_detect(befeuerungsarten, "\\|") ~ NA_character_,
                 TRUE ~ befeuerungsarten
             ),
             bef1 = as.numeric(bef1),
@@ -118,10 +118,10 @@ cleaning_org_data <- function(
             ),
             # replace help variable with splitted values (by "|")
             # output column will be of type list
-            bef_help = stringi::stri_split_fixed(bef_help, "|"),
+            bef_help = stringi::stri_split_fixed(bef_help, "\\|"),
             # get the number of times "|" occured
-            bef_count = stringi::stri_count_fixed(befeuerungsarten, "|"),
-            #----------------------------------------------
+            bef_count = stringi::stri_count_fixed(befeuerungsarten, "\\|"),
+            #--------------------------------------------------
             # bauphase
             bauphase = dplyr::case_when(
                 bauphase == "Keine Angabe" ~ as.character(
@@ -129,7 +129,7 @@ cleaning_org_data <- function(
                 ),
                 TRUE ~ bauphase
             ),
-            #----------------------------------------------
+            #--------------------------------------------------
             # pets
             haustier_erlaubt = dplyr::case_when(
                 haustier_erlaubt == "Keine Angabe" ~ as.character(
@@ -137,7 +137,7 @@ cleaning_org_data <- function(
                 ),
                 TRUE ~ haustier_erlaubt
             ),
-            #----------------------------------------------
+            #--------------------------------------------------
             # heating costs in rent
             heizkosten_in_wm_enthalten = dplyr::case_when(
                 heizkosten_in_wm_enthalten == "null" ~ as.character(
@@ -166,7 +166,7 @@ cleaning_org_data <- function(
         )
     )
 
-    #----------------------------------------------
+    #--------------------------------------------------
     # rename columns "bef" (befeuerungsarten)
 
     # get the max amount of potential splits based on delimiter "|"
@@ -175,7 +175,7 @@ cleaning_org_data <- function(
     # extract original names (names to leave unchanged)
     # exception of bef1
     org_names <- housing_data_prep |>
-        dplyr::select(!contains("bef_help") & !contains("bef_count")) |>
+        dplyr::select(!dplyr::contains("bef_help") & !dplyr::contains("bef_count")) |>
         names()
 
     # generate new names
@@ -191,7 +191,7 @@ cleaning_org_data <- function(
     # assign new names
     names(housing_data_prep) <- c(org_names, new_names, "bef_count")
 
-    #----------------------------------------------
+    #--------------------------------------------------
     # drop unnecessary columns
 
     housing_data_prep <- housing_data_prep |>
@@ -200,12 +200,12 @@ cleaning_org_data <- function(
             "befeuerungsarten", # transformed to bef1, bef2, ...
             "anbietertyp", # tranformed to anbieter
             "zeitraum", # transformed to ajahr, amonat, ejahr, emonat
-            #----------------------------------------------
+            #--------------------------------------------------
             # other
             "objektkategorie2id", # removed because recode objektkategorie2
         ))
 
-    #----------------------------------------------
+    #--------------------------------------------------
     # variables that are potentially in the data set because the data were
     # delivered with the residential data together
     # remove those variables
@@ -241,14 +241,14 @@ cleaning_org_data <- function(
         }
     }
 
-    #----------------------------------------------
+    #--------------------------------------------------
     # recode Immo's missing observations (-1) to our missings (-9)
 
     housing_data_prep[
         housing_data_prep == helpers_missing_values()[["immo_missing"]]
     ] <- helpers_missing_values()[["other"]]
 
-    #----------------------------------------------
+    #--------------------------------------------------
     # fix dummy variables (Yes or No variables)
 
     # retrieve logical variables
@@ -305,7 +305,7 @@ cleaning_org_data <- function(
             )
     }
 
-    #----------------------------------------------
+    #--------------------------------------------------
     # recode categorical variables
 
     housing_data_prep <- housing_data_prep |>
@@ -480,7 +480,10 @@ cleaning_org_data <- function(
                 ausstattung = ausstattungsqualitaet,
                 kategorie_business = objektkategorie2
             )
+        
         #--------------------------------------------------
+        # actual check
+
         targets::tar_assert_true(
             length(unique(dta[[var]])) == expected_unique_values,
             msg = glue::glue(
@@ -501,7 +504,7 @@ cleaning_org_data <- function(
     recoding_length_check("objektzustand", 11)
     recoding_length_check("immobilientyp", 5)
 
-    #----------------------------------------------
+    #--------------------------------------------------
     # issue of rent
     # explanation: for commercial data its possible to provide information
     # as rent (mietekalt) + additional expenses (nebenkosten) or to provide
@@ -562,7 +565,7 @@ cleaning_org_data <- function(
             )
         )
 
-    #----------------------------------------------
+    #--------------------------------------------------
     # censor implausible values
 
     cols <- c(
@@ -667,7 +670,7 @@ cleaning_org_data <- function(
             )
         ) 
 
-    #----------------------------------------------
+    #--------------------------------------------------
     # fix etage
     # problem: sometimes there is a specific number given but sometimes
     # there is also a range given
@@ -754,7 +757,7 @@ cleaning_org_data <- function(
         # remove helper variable
         dplyr::select(-etage_clean)
 
-    #----------------------------------------------
+    #--------------------------------------------------
     # setting correct types
     # sometimes it is already correct by forcing it here again
 
@@ -820,9 +823,9 @@ cleaning_org_data <- function(
         }
     }
 
-    #----------------------------------------------
+    #--------------------------------------------------
     # replace missings according to type
-    # NOTE: serves as check if not already recoded befor
+    # NOTE: serves as check if not already recoded before
 
     housing_data_prep <- housing_data_prep |>
         dplyr::mutate_if(
@@ -843,8 +846,8 @@ cleaning_org_data <- function(
             )
         )
 
-    #----------------------------------------------
-    # export
+    #--------------------------------------------------
+    # export data
 
     fst::write.fst(
         housing_data_prep,
@@ -856,7 +859,7 @@ cleaning_org_data <- function(
         )
     )
 
-    #----------------------------------------------
+    #--------------------------------------------------
     # return
 
     return(housing_data_prep)
