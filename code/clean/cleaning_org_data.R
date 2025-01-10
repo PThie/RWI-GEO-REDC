@@ -847,19 +847,6 @@ cleaning_org_data <- function(
         )
 
     #--------------------------------------------------
-    # export data
-
-    fst::write.fst(
-        housing_data_prep,
-        file.path(
-            config_paths()[["data_path"]],
-            "processed",
-            config_globals()[["current_delivery"]],
-            "clean_data.fst"
-        )
-    )
-
-    #--------------------------------------------------
     # return
 
     return(housing_data_prep)
