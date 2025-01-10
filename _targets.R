@@ -23,6 +23,8 @@ suppressPackageStartupMessages({
     library(glue)
     library(cli)
     library(tidyr)
+    library(openxlsx)
+    library(gdata)
 })
 
 #--------------------------------------------------
@@ -219,6 +221,8 @@ targets_preparation <- rlang::list2(
             )
         )
     ),
+    # TODO: Add new building block with exporting names and types (see above)
+    # only for first wave (should be used in testing_consistent_variables see above)
     tar_target(
         org_data_geo,
         georeferencing_housing_data(
@@ -227,6 +231,12 @@ targets_preparation <- rlang::list2(
             spatial_data_zip_code = spatial_data_zip_code,
             spatial_data_municipality = spatial_data_municipality,
             spatial_data_district = spatial_data_district
+        )
+    ),
+    tar_fst(
+        finalized_data,
+        testing_missing_variables(
+            housing_data = org_data_geo
         )
     )
 )
