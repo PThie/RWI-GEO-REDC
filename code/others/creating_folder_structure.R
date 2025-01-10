@@ -6,7 +6,7 @@ creating_folder_structure <- function() {
     #' 
     #' @return NULL
     #' @author Patrick Thiel
-    #' 
+    
     #----------------------------------------------
     # folder generation for new delivery (in data folder)
 
@@ -57,6 +57,29 @@ creating_folder_structure <- function() {
             )
         }
     }
+  
+    #--------------------------------------------------
+    # create version folder in output
+  
+    ifelse(
+        !dir.exists(
+            file.path(
+                config_globals()[["output_path"]],
+                config_globals()[["current_version"]]
+            )
+        ),
+        yes = dir.create(
+            file.path(
+                config_globals()[["output_path"]],
+                config_globals()[["current_version"]]
+            )
+        ),
+        no = cli::cli_alert_success(
+            cli::col_green(
+                "Version directory for output folder already exists."
+            )
+        )
+    )
 
     #--------------------------------------------------
     # return
