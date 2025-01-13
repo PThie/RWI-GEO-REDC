@@ -115,7 +115,7 @@ testing_missing_variables <- function(
 
     # export list of variables to check with future waves
     utils::write.table(
-        all_missing_variable,
+        all_missing_variable[!grepl("bef", all_missing_variable)],
         file.path(
             config_paths()[["output_path"]],
             config_globals()[["current_version"]],
