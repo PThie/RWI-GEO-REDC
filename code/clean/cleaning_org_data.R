@@ -17,16 +17,6 @@ cleaning_org_data <- function(
     # make all names lowercase
     names(housing_data) <- tolower(names(housing_data))
 
-    # define REDC delivery as variable
-    # NEEDED? with current_delivery_counter
-    # if (config_globals()[["current_delivery"]] == "Lieferung_23121") {
-    #     # NOTE: Lieferung_23121 was delivered later than Lieferung_2312 but
-    #     # still belongs to the same wave
-    #     del <- "Lieferung_2312"
-    # } else {
-    #     del <- config_globals()[["current_delivery"]]
-    # }
-
     # apply cleaning steps
     housing_data_prep <- housing_data |>
         dplyr::mutate(
@@ -124,7 +114,7 @@ cleaning_org_data <- function(
             #--------------------------------------------------
             # bauphase
             bauphase = dplyr::case_when(
-                bauphase == "Keine Angabe" ~ as.character(
+                bauphase %in% helpers_missing_values()[["not_specified_variants"]] ~ as.character(
                     helpers_missing_values()[["not_specified"]]
                 ),
                 TRUE ~ bauphase
@@ -132,7 +122,7 @@ cleaning_org_data <- function(
             #--------------------------------------------------
             # pets
             haustier_erlaubt = dplyr::case_when(
-                haustier_erlaubt == "Keine Angabe" ~ as.character(
+                haustier_erlaubt %in% helpers_missing_values()[["not_specified_variants"]] ~ as.character(
                     helpers_missing_values()[["not_specified"]]
                 ),
                 TRUE ~ haustier_erlaubt
@@ -266,7 +256,7 @@ cleaning_org_data <- function(
 
         targets::tar_assert_true(
             all(unique_values %in% c(
-                TRUE, FALSE, NA, "Keine Angabe", "keine Angabe", "keine Angaben",
+                TRUE, FALSE, NA, helpers_missing_values()[["not_specified_variants"]],
                 "nicht mehr existent"
             )),
             msg = glue::glue(
@@ -286,10 +276,7 @@ cleaning_org_data <- function(
                     .x == TRUE ~ 1,
                     .x == FALSE ~ 0,
                     .x == "nicht mehr existent" ~ helpers_missing_values()[["not_used_anymore"]],
-                    (.x == "Keine Angabe" | 
-                        .x == "keine Angabe" | 
-                        .x == "keine Angaben"
-                        ) ~ helpers_missing_values()[["not_specified"]],
+                    .x %in% helpers_missing_values()[["not_specified_variants"]] ~ helpers_missing_values()[["not_specified"]],
                     TRUE ~ helpers_missing_values()[["other"]]
                 )
             )
@@ -315,10 +302,7 @@ cleaning_org_data <- function(
                 ausstattung == "Normal" ~ 2,
                 ausstattung == "Gehoben" ~ 3,
                 ausstattung == "Luxus" ~ 4,
-                (ausstattung == "Keine Angabe" |
-                    ausstattung == "keine Angabe" |
-                    ausstattung == "keine Angaben"
-                    ) ~ helpers_missing_values()[["not_specified"]],
+                ausstattung %in% helpers_missing_values()[["not_specified_variants"]] ~ helpers_missing_values()[["not_specified"]],
                 TRUE ~ helpers_missing_values()[["other"]]
             ),
             energieeffizienzklasse = dplyr::case_when(
@@ -331,19 +315,13 @@ cleaning_org_data <- function(
                 energieeffizienzklasse == "F" ~ 7,
                 energieeffizienzklasse == "G" ~ 8,
                 energieeffizienzklasse == "H" ~ 9,
-                (energieeffizienzklasse == "Keine Angabe" |
-                    energieeffizienzklasse == "keine Angabe" |
-                    energieeffizienzklasse == "keine Angaben"
-                    ) ~ helpers_missing_values()[["not_specified"]],
+                energieeffizienzklasse %in% helpers_missing_values()[["not_specified_variants"]] ~ helpers_missing_values()[["not_specified"]],
                 TRUE ~ helpers_missing_values()[["other"]]
             ),
             energieausweistyp = dplyr::case_when(
                 energieausweistyp == "Endenergiebedarf" ~ 1,
                 energieausweistyp == "Energieverbrauchskennwert" ~ 2,
-                (energieausweistyp == "Keine Angabe" |
-                    energieausweistyp == "keine Angabe" |
-                    energieausweistyp == "keine Angaben"
-                    ) ~ helpers_missing_values()[["not_specified"]],
+                energieausweistyp %in% helpers_missing_values()[["not_specified_variants"]] ~ helpers_missing_values()[["not_specified"]],
                 TRUE ~ helpers_missing_values()[["other"]]
             ),
             heizungsart = dplyr::case_when(
@@ -360,10 +338,7 @@ cleaning_org_data <- function(
                 heizungsart == "Solar-Heizung" ~ 11,
                 heizungsart == "Waermepumpe" ~ 12,
                 heizungsart == "Zentralheizung" ~ 13,
-                (heizungsart == "Keine Angabe" |
-                    heizungsart == "keine Angabe" |
-                    heizungsart == "keine Angaben"
-                    ) ~ helpers_missing_values()[["not_specified"]],
+                heizungsart %in% helpers_missing_values()[["not_specified_variants"]] ~ helpers_missing_values()[["not_specified"]],
                 TRUE ~ helpers_missing_values()[["other"]]
             ),
             kategorie_business = dplyr::case_when(
@@ -420,10 +395,7 @@ cleaning_org_data <- function(
                 objektkategorie2 == "Hotel garni" ~ 51,
                 objektkategorie2 == "Kuehlregallager" ~ 52,
                 objektkategorie2 == "Weingut" ~ 53,
-                (objektkategorie2 == "Keine Angabe" |
-                    objektkategorie2 == "keine Angabe" |
-                    objektkategorie2 == "keine Angaben"
-                    ) ~ helpers_missing_values()[["not_specified"]],
+                objektkategorie2 %in% helpers_missing_values()[["not_specified_variants"]] ~ helpers_missing_values()[["not_specified"]],
                 TRUE ~ helpers_missing_values()[["other"]]
             ),
             objektzustand = dplyr::case_when(
@@ -437,10 +409,7 @@ cleaning_org_data <- function(
                 objektzustand == "Renovierungsbeduerftig" ~ 8,
                 objektzustand == "Nach Vereinbarung" ~ 9,
                 objektzustand == "Abbruchreif" ~ 10,
-                (objektzustand == "Keine Angabe" |
-                    objektzustand == "keine Angabe" |
-                    objektzustand == "keine Angaben"
-                    ) ~ helpers_missing_values()[["not_specified"]],
+                objektzustand %in% helpers_missing_values()[["not_specified_variants"]] ~ helpers_missing_values()[["not_specified"]],
                 TRUE ~ helpers_missing_values()[["other"]]
             ),
             immobilientyp = dplyr::case_when(
@@ -449,10 +418,7 @@ cleaning_org_data <- function(
                 immobilientyp == "Hallen_Produktion" ~ 3,
                 immobilientyp == "Spezialgewerbe" ~ 4,
                 immobilientyp == "Gastronomie_Hotel" ~ 5,
-                (immobilientyp == "Keine Angabe" |
-                    immobilientyp == "keine Angabe" |
-                    immobilientyp == "keine Angaben"
-                    ) ~ helpers_missing_values()[["not_specified"]],
+                immobilientyp %in% helpers_missing_values()[["not_specified_variants"]] ~ helpers_missing_values()[["not_specified"]],
                 TRUE ~ helpers_missing_values()[["other"]]
             )
         ) |>
