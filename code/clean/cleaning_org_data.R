@@ -724,6 +724,241 @@ cleaning_org_data <- function(
         dplyr::select(-etage_clean)
 
     #--------------------------------------------------
+    # clean mietekaution (security deposit)
+
+    housing_data_prep <- housing_data_prep |>
+        dplyr::mutate(
+            # clean some special characters (makes following steps easier)
+            mietekaution = stringr::str_replace(mietekaution, "EUR", ""),
+            mietekaution = stringr::str_replace(mietekaution, ",-", ""),
+            mietekaution = stringr::str_replace(mietekaution, "EURO", ""),
+            # number of months
+            mietekaution_months = NA,
+            mietekaution_months = dplyr::case_when(
+                mietekaution == "" ~ helpers_missing_values()[["other"]],
+                mietekaution == "-" ~ helpers_missing_values()[["not_specified"]],
+                mietekaution == "/" ~ helpers_missing_values()[["not_specified"]],
+                # TODO: WRITE CHECK IF THE LIST CHANGES
+                mietekaution %in% c(
+                    "Deutschland", "€", ".....", "?", "??", "EUR"
+                ) ~ helpers_missing_values()[["implausible"]],
+                mietekaution %in% c(
+                    "VHB", "n. V.", "n.v", "tbd", "variabel",
+                    "Kaution", "Kaution:", "erforderlich", "Kaution erforderlich",
+                    "Kaution muss gestellt werden", "siehe Sonstiges",
+                    "muss gestellt werden", "n.A.", "nA", "VHS", "J A",
+                    "auf Nachfrage", "NKM", "n.n.", "Vb.", "vhb.", "p.A."
+                ) ~ helpers_missing_values()[["not_specified"]],
+                grepl("VB", mietekaution) ~ helpers_missing_values()[["not_specified"]],
+                grepl("k.A.", mietekaution, ignore.case = TRUE) ~ helpers_missing_values()[["not_specified"]],
+                grepl("n.V.", mietekaution, ignore.case = TRUE) ~ helpers_missing_values()[["not_specified"]],
+                grepl("ja", mietekaution, ignore.case = TRUE) ~ helpers_missing_values()[["not_specified"]],
+                grepl("ueblich", mietekaution, ignore.case = TRUE) ~ helpers_missing_values()[["not_specified"]],
+                grepl("vereinb", mietekaution, ignore.case = TRUE) ~ helpers_missing_values()[["not_specified"]],
+                grepl("absprache", mietekaution, ignore.case = TRUE) ~ helpers_missing_values()[["not_specified"]],
+                grepl("anfrage", mietekaution, ignore.case = TRUE) ~ helpers_missing_values()[["not_specified"]],
+                grepl("verhand", mietekaution, ignore.case = TRUE) ~ helpers_missing_values()[["not_specified"]],
+                grepl("abhaengig", mietekaution, ignore.case = TRUE) ~ helpers_missing_values()[["not_specified"]],
+                grepl("buergschaft", mietekaution, ignore.case = TRUE) ~ helpers_missing_values()[["not_specified"]],
+                grepl("versicherung", mietekaution, ignore.case = TRUE) ~ helpers_missing_values()[["not_specified"]],
+                grepl("aval", mietekaution, ignore.case = TRUE) ~ helpers_missing_values()[["not_specified"]],
+                grepl("ohne Kaution", mietekaution, ignore.case = TRUE) ~ 0,
+                grepl("entfaellt", mietekaution, ignore.case = TRUE) ~ 0,
+                grepl("frei", mietekaution, ignore.case = TRUE) ~ 0,
+                grepl("keine", mietekaution, ignore.case = TRUE) ~ 0,
+                grepl("nein", mietekaution, ignore.case = TRUE) ~ 0,
+                grepl("ohne", mietekaution, ignore.case = TRUE) ~ 0,
+                mietekaution == "0" ~ 0,
+                grepl("sechs", mietekaution, ignore.case = TRUE) ~ 6,
+                grepl("drei", mietekaution, ignore.case = TRUE) ~ 3,
+                grepl("zwei", mietekaution, ignore.case = TRUE) ~ 2,
+                grepl("eine", mietekaution, ignore.case = TRUE) ~ 1,
+                nchar(mietekaution) == 1 ~ stringr::str_extract(mietekaution, "[0-9]+") |>
+                    as.numeric(),
+                # definitions of cold rent
+                grepl("netto|kalt|Grundmiete", mietekaution, ignore.case = TRUE) ~ as.numeric(
+                    stringr::str_extract(mietekaution, "[0-9]+")
+                ),
+                grepl("NKM|KM|NK|NM", mietekaution) ~ as.numeric(
+                    stringr::str_extract(mietekaution, "[0-9]+")
+                ),
+                # definitions of warm rent
+                grepl("warm|brutto|Gesamtmiet", mietekaution, ignore.case = TRUE) ~ as.numeric(
+                    stringr::str_extract(mietekaution, "[0-9]+")
+                ),
+                grepl("BWM|WM|BM", mietekaution) ~ as.numeric(
+                    stringr::str_extract(mietekaution, "[0-9]+")
+                ),
+                # definitions of other rent types
+                grepl("MM|mm|MK|MkM|BBM|Mkm|mM|M.M", mietekaution) ~ as.numeric(
+                    stringr::str_extract(mietekaution, "[0-9]+")
+                ),
+                grepl("Monat", mietekaution, ignore.case = TRUE) ~ as.numeric(
+                    stringr::str_extract(mietekaution, "[0-9]+")
+                ),
+                grepl("Miete", mietekaution, ignore.case = TRUE) ~ as.numeric(
+                    stringr::str_extract(mietekaution, "[0-9]+")
+                ),
+                grepl("-fach", mietekaution, ignore.case = TRUE) ~ as.numeric(
+                    stringr::str_extract(mietekaution, "[0-9]+")
+                ),
+                TRUE ~ mietekaution_months
+            ),
+            # NOTE: Needs to be outside of the case_when statement above because
+            # this overwrites the conditions above
+            mietekaution_months = dplyr::case_when(
+                grepl("Nettomonatsmieten ohne Betriebs-", mietekaution) ~ as.numeric(
+                    stringr::str_extract(mietekaution, "[0-9]+")
+                ),
+                TRUE ~ mietekaution_months
+            ),
+            mietekaution_months = dplyr::case_when(
+                grepl("Monatsmieten, auch als Bankbuergschaft", mietekaution) ~ as.numeric(
+                    stringr::str_extract(mietekaution, "[0-9]+")
+                ),
+                TRUE ~ mietekaution_months
+            ),
+            mietekaution_helper_1 = dplyr::case_when(
+                stringr::str_detect(mietekaution_months, "[0-9]+") ~ "CAPTURED",
+                TRUE ~ "NOT_CAPTURED"
+            ),
+            #--------------------------------------------------
+            # security deposit price
+            mietekaution_price = NA,
+            mietekaution_price = dplyr::case_when(
+                stringr::str_detect(mietekaution, ",") == FALSE & mietekaution_helper_1 != "CAPTURED" ~ as.numeric(
+                    stringr::str_extract(mietekaution, "[0-9]+")
+                ),
+                TRUE ~ mietekaution_price 
+            ),
+            mietekaution_helper_2 = dplyr::case_when(
+                !is.na(mietekaution_price) ~ "CAPTURED",
+                TRUE ~ "NOT_CAPTURED"
+            ),
+            # NOTE: Now I want to capture all numbers that have commas (like 3,000)
+            # 5 characters captures larger numbers
+            mietekaution_helper_3 = mietekaution,
+            mietekaution_helper_3 = dplyr::case_when(
+                mietekaution_helper_1 == "CAPTURED" ~ NA_character_,
+                mietekaution_helper_2 == "CAPTURED" ~ NA_character_,
+                nchar(mietekaution) > 5 ~ stringr::str_replace(mietekaution_helper_3, "\\.", ""),
+                TRUE ~ NA_character_ # set everything below 5 characters to NA
+            ),
+            mietekaution_helper_3 = stringr::str_replace(mietekaution_helper_3, ",", "\\."),
+            mietekaution_price = dplyr::case_when(
+                !is.na(mietekaution_helper_3) ~ stringr::str_extract(mietekaution_helper_3, "[0-9]+") |>
+                    as.numeric(),
+                TRUE ~ mietekaution_price
+            ),
+            # Capture zeros (i.e. values like 0.00, 0.0, 0.000)
+            mietekaution_helper_4 = mietekaution,
+            mietekaution_helper_4 = dplyr::case_when(
+                mietekaution_helper_1 == "CAPTURED" ~ NA_character_,
+                mietekaution_helper_2 == "CAPTURED" ~ NA_character_,
+                nchar(mietekaution) > 5 ~ NA_character_,
+                nchar(mietekaution) <= 5 ~ stringr::str_replace(mietekaution_helper_4, "\\.", ""),
+                TRUE ~ NA_character_
+            ),
+            # NOTE: replacing all commas with nothing such that all combinations of
+            # zeros (0.00, 0.0, 0.000 etc.) convert to zero in numeric transformation
+            mietekaution_helper_4 = stringr::str_replace(mietekaution_helper_4, ",", ""),
+            mietekaution_price = dplyr::case_when(
+                as.numeric(mietekaution_helper_4) == 0 ~ 0,
+                TRUE ~ mietekaution_price
+            ),
+            # capture remaining open values
+            mietekaution_helper_5 = mietekaution,
+            mietekaution_helper_5 = dplyr::case_when(
+                mietekaution_helper_1 == "CAPTURED" ~ "CAPTURED",
+                mietekaution_helper_2 == "CAPTURED" ~ "CAPTURED",
+                !is.na(mietekaution_helper_3) ~ "CAPTURED",
+                as.numeric(mietekaution_helper_4) == 0 ~ "CAPTURED",
+                TRUE ~ stringr::str_replace(mietekaution_helper_5, ",", "\\.")
+            ),
+            mietekaution_price = dplyr::case_when(
+                mietekaution_helper_5 != "CAPTURED" ~ stringr::str_extract(mietekaution_helper_5, "[0-9]+") |>
+                    as.numeric(),
+                TRUE ~ mietekaution_price 
+            ),
+            # censor price values below 12
+            # maybe an indicator for actually entering the number of months as deposit
+            mietekaution_price = dplyr::case_when(
+                mietekaution_price <= 12 ~ helpers_missing_values()[["implausible"]],
+                TRUE ~ mietekaution_price
+            ),
+            # set price to zero if months are zero (there is no deposit required)
+            mietekaution_price = dplyr::case_when(
+                mietekaution_months == 0 ~ 0,
+                TRUE ~ mietekaution_price
+            ),
+            #--------------------------------------------------
+            # security deposit type
+            mietekaution_type = dplyr::case_when(
+                # definitions of cold rent
+                grepl("netto|kalt|Grundmiete", mietekaution, ignore.case = TRUE) ~ 1,
+                grepl("NKM|KM|NK|NM", mietekaution) ~ 1,
+                grepl("Nettomonatsmieten ohne Betriebs-", mietekaution) ~ 1,
+                # definitions of warm rent
+                grepl("warm|brutto|Gesamtmiet", mietekaution, ignore.case = TRUE) ~ 2,
+                grepl("BWM|WM|BM", mietekaution) ~ 2,
+                # definitions of other rent types (unknown whether cold or warm)
+                grepl("MM|mm|MK|MkM|BBM|Mkm|mM|M.M", mietekaution) ~ 3,
+                grepl("Miete", mietekaution, ignore.case = TRUE) ~ 3,
+                grepl("Monat", mietekaution, ignore.case = TRUE) ~ 3,
+                grepl("-fach", mietekaution, ignore.case = TRUE) ~ 3,
+                # definitions other than rent
+                grepl("buergschaft", mietekaution, ignore.case = TRUE) ~ 4,
+                grepl("Monatsmieten, auch als Bankbuergschaft", mietekaution) ~ 4,
+                grepl("Versicherung", mietekaution, ignore.case = TRUE) ~ 4,
+                grepl("Genossenschaftsanteile", mietekaution, ignore.case = TRUE) ~ 4,
+                grepl("Aval-Kredit", mietekaution, ignore.case = TRUE) ~ 4,
+                grepl("Avall", mietekaution, ignore.case = TRUE) ~ 4,
+                # definition when deposit is in money-value
+                !is.na(mietekaution_price) ~ 5,
+                # definition for no deposit
+                mietekaution_months == 0 ~ 6,
+                TRUE ~ helpers_missing_values()[["not_specified"]]
+            ),
+            #--------------------------------------------------
+            # redefine missings after cleaning
+            mietekaution_months = dplyr::case_when(
+                is.na(mietekaution_months) ~ helpers_missing_values()[["other"]],
+                TRUE ~ mietekaution_months
+            ),
+            mietekaution_price = dplyr::case_when(
+                is.na(mietekaution_price) ~ helpers_missing_values()[["other"]],
+                TRUE ~ mietekaution_price
+            ),
+            # NOTE: does not work when included in statement above
+            mietekaution_price = dplyr::case_when(
+                mietekaution_months == helpers_missing_values()[["not_specified"]] ~ helpers_missing_values()[["not_specified"]],
+                TRUE ~ mietekaution_price
+            )
+        ) |>
+        dplyr::select(-dplyr::contains("mietekaution_helper")) |>
+        dplyr::select(-mietekaution)
+
+    # fix special cases
+    housing_data_prep <- housing_data_prep |>
+        dplyr::mutate(
+            mietekaution_price = dplyr::case_when(
+                mietekaution == "3 x 3500,00" ~ 10500,
+                TRUE ~ mietekaution_price
+            )
+        )
+
+    # Check that security deposit months and price have the same length in zero values
+    targets::tar_assert_true(
+        length(which(housing_data_prep[["mietekaution_months"]])) == length(which(housing_data_prep[["mietekaution_price"]])),
+        msg = glue::glue(
+            "!!! Warning: ",
+            "Security deposit months and security deposit price do not have the same",
+            "length in zero values. By definition it should be identical.",
+            "(Error code: cod#6)"
+        )
+    )
+
+    #--------------------------------------------------
     # setting correct types
     # sometimes it is already correct by forcing it here again
 
