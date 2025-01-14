@@ -935,8 +935,7 @@ cleaning_org_data <- function(
                 TRUE ~ mietekaution_price
             )
         ) |>
-        dplyr::select(-dplyr::contains("mietekaution_helper")) |>
-        dplyr::select(-mietekaution)
+        dplyr::select(-dplyr::contains("mietekaution_helper"))
 
     # fix special cases
     housing_data_prep <- housing_data_prep |>
@@ -945,11 +944,12 @@ cleaning_org_data <- function(
                 mietekaution == "3 x 3500,00" ~ 10500,
                 TRUE ~ mietekaution_price
             )
-        )
+        ) |>
+        dplyr::select(-mietekaution)
 
     # Check that security deposit months and price have the same length in zero values
     targets::tar_assert_true(
-        length(which(housing_data_prep[["mietekaution_months"]])) == length(which(housing_data_prep[["mietekaution_price"]])),
+        length(which(housing_data_prep[["mietekaution_months"]] == 0)) == length(which(housing_data_prep[["mietekaution_price"]] == 0)),
         msg = glue::glue(
             "!!! Warning: ",
             "Security deposit months and security deposit price do not have the same",
