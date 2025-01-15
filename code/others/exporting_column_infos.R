@@ -29,7 +29,17 @@ exporting_column_infos <- function(
         rownames(coltypes) <- NULL
 
         coltypes <- coltypes |>
-            dplyr::relocate(columns)
+            dplyr::relocate(columns) |>
+            # handle that Einstelldatum has two types
+            dplyr::filter(
+                columns != "Einstelldatum2"
+            ) |>
+            dplyr::mutate(
+                columns = dplyr::case_when(
+                    columns == "Einstelldatum1" ~ "Einstelldatum",
+                    TRUE ~ columns
+                )
+            )
 
         #--------------------------------------------------
         # export
