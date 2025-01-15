@@ -201,21 +201,20 @@ targets_reading <- rlang::list2(
 # already have been cleaned.
 
 targets_preparation <- rlang::list2(
-    # TODO: Implement with new wave
-    # NOTE: if the pipeline stops due to inconsistent variables, make the appropriate
-    # changes in read_org_data.R and when done add the variable to the list of
-    # fixed variables in testing_consistent_variables.R
-    # tar_target(
-    #     org_data_expanded,
-    #     testing_consistent_variables(
-    #         org_data = org_data,
-    #         current_delivery = config_globals()[["current_delivery"]]
-    #     )
-    # ),
     tar_fst(
         column_infos_benchmark,
         exporting_column_infos(
             housing_data = org_data
+        )
+    ),
+    # NOTE: if the pipeline stops due to inconsistent variables, make the appropriate
+    # changes and when done add the variable to the list of
+    # fixed variables in config.R
+    tar_target(
+        test_consistent_variables,
+        testing_consistent_variables(
+            housing_data = org_data,
+            column_infos_benchmark = column_infos_benchmark
         )
     ),
     tar_fst(
