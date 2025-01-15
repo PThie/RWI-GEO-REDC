@@ -25,6 +25,8 @@ suppressPackageStartupMessages({
     library(tidyr)
     library(openxlsx)
     library(gdata)
+    library(qs)
+    library(sf)
 })
 
 #--------------------------------------------------
@@ -211,18 +213,21 @@ targets_preparation <- rlang::list2(
     #     )
     # ),
     tar_fst(
+        column_infos_benchmark,
+        exporting_column_infos(
+            housing_data = org_data
+        )
+    ),
+    tar_fst(
         org_data_cleaned,
         # suppress warnings because conversion of characters to numeric
         # generates warnings
-        # TODO: Export names and types (?) for checking with next wave
         suppressWarnings(
             cleaning_org_data(
                 housing_data = org_data
             )
         )
     ),
-    # TODO: Add new building block with exporting names and types (see above)
-    # only for first wave (should be used in testing_consistent_variables see above)
     tar_target(
         org_data_geo,
         georeferencing_housing_data(
@@ -233,6 +238,9 @@ targets_preparation <- rlang::list2(
             spatial_data_district = spatial_data_district
         )
     ),
+    # TODO: Build check that we do not remove variables in one wave that have
+    # values in another wave. Load list of variables that have been removed in
+    # previous wave
     tar_fst(
         finalized_data,
         testing_missing_variables(
