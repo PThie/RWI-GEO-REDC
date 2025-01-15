@@ -237,14 +237,15 @@ targets_preparation <- rlang::list2(
             spatial_data_district = spatial_data_district
         )
     ),
-    # TODO: Build check that we do not remove variables in one wave that have
-    # values in another wave. Load list of variables that have been removed in
-    # previous wave
     tar_fst(
         finalized_data,
         testing_missing_variables(
             housing_data = org_data_geo
         )
+    ),
+    tar_target(
+        removed_variables,
+        testing_removed_variables()
     )
 )
 
