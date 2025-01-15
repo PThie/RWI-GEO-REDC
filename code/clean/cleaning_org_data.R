@@ -988,7 +988,7 @@ cleaning_org_data <- function(
 
     # character columns
     char_cols <- c(
-        "freiab", "courtage", "mietekaution", "plz", "ort",
+        "freiab", "courtage", "plz", "ort",
         "strasse", "hausnr", "redc_version", "redc_delivery", "etage"
     )
 
