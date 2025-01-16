@@ -218,7 +218,7 @@ targets_preparation <- rlang::list2(
         )
     ),
     tar_fst(
-        org_data_cleaned,
+        housing_data_cleaned,
         # suppress warnings because conversion of characters to numeric
         # generates warnings
         suppressWarnings(
@@ -228,9 +228,9 @@ targets_preparation <- rlang::list2(
         )
     ),
     tar_target(
-        org_data_geo,
+        housing_data_geo,
         georeferencing_housing_data(
-            housing_data = org_data_cleaned,
+            housing_data = housing_data_cleaned,
             spatial_data_grids = spatial_data_grids,
             spatial_data_zip_code = spatial_data_zip_code,
             spatial_data_municipality = spatial_data_municipality,
@@ -240,7 +240,7 @@ targets_preparation <- rlang::list2(
     tar_fst(
         finalized_data,
         testing_missing_variables(
-            housing_data = org_data_geo
+            housing_data = housing_data_geo
         )
     ),
     tar_target(
@@ -266,9 +266,9 @@ targets_append <- rlang::list2(
 
 targets_combine_cleaning <- rlang::list2(
     tar_fst(
-        org_data_append_cleaned,
+        housing_data_append_cleaned,
         clean_append_data(
-            org_data_append = org_data_append
+            housing_data = housing_data_append
         )
     )
 )
