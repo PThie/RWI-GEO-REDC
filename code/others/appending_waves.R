@@ -1,9 +1,14 @@
-appending_waves <- function(deliveries = NA) {
+appending_waves <- function(
+    deliveries = NA,
+    dependency = NA
+) {
     #' @title Combining deliveries
     #' 
     #' @description This function combines all deliveries into one data set.
     #' 
     #' @param deliveries List with all deliveries
+    #' @param dependency Object from previous step to indicate dependency between
+    #' functions/ steps
     #' 
     #' @return Dataframe, combined data set
     #' @author Patrick Thiel
