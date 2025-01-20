@@ -35,7 +35,7 @@ testing_missing_variables <- function(
 
     # apply function to calculate missings and combine both types
     missings <- rbind(
-        calculating_missings(is.integer, missing_type = c(-9)),
+        calculating_missings(is.numeric, missing_type = c(-9)),
         calculating_missings(is.character, missing_type = c("-9"))
     ) |>
         dplyr::arrange(dplyr::desc(missings)) |>
@@ -51,7 +51,7 @@ testing_missing_variables <- function(
     all_missing_specification <- as.numeric(unlist(helpers_missing_values()))
 
     missing_incl_censored <- rbind(
-        calculating_missings(is.integer, missing_type = all_missing_specification),
+        calculating_missings(is.numeric, missing_type = all_missing_specification),
         calculating_missings(is.character, missing_type = all_missing_specification |> as.character())
     ) |>
         dplyr::arrange(dplyr::desc(missings)) |>
