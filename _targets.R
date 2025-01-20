@@ -256,7 +256,8 @@ targets_append <- rlang::list2(
     tar_fst(
         housing_data_appended,
         appending_waves(
-            deliveries = config_globals()[["deliveries"]]
+            deliveries = config_globals()[["deliveries"]],
+            dependency = finalized_data
         )
     )
 )
@@ -267,8 +268,8 @@ targets_append <- rlang::list2(
 targets_combine_cleaning <- rlang::list2(
     tar_fst(
         housing_data_append_cleaned,
-        clean_append_data(
-            housing_data = housing_data_append
+        cleaning_append_data(
+            housing_data = housing_data_appended
         )
     )
 )
@@ -309,6 +310,6 @@ rlang::list2(
     targets_reading,
     targets_preparation,
     targets_append,
-    #t argets_combine_cleaning,
+    targets_combine_cleaning,
     targets_pipeline_stats
 )
