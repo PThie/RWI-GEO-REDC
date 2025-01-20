@@ -31,6 +31,7 @@ testing_removed_variables <- function() {
 
         #--------------------------------------------------
         # check in case nothing was removed (table is empty)
+
         if (file.info(file_location_current)$size == 0) {
             cli::cli_alert_success(
                 cli::col_green(
@@ -39,7 +40,7 @@ testing_removed_variables <- function() {
             )
 
             # define empty vector for comparison
-            deleted_vars <- c()
+            deleted_vars <- NULL
         } else {
             # read variables that were removed for current version
             deleted_vars <- utils::read.table(file_location_current) |>
@@ -58,7 +59,7 @@ testing_removed_variables <- function() {
             )
 
             # define empty vector for comparison
-            deleted_vars_prev <- c()
+            deleted_vars_prev <- NULL
         } else {
             # read variables that were removed for previous version
             deleted_vars_prev <- utils::read.table(file_location_prev) |>
@@ -76,7 +77,7 @@ testing_removed_variables <- function() {
                 )
             )
             # define empty vector for return
-            difference <- c()
+            difference <- NULL
         } else {
             # find the difference between both variable vectors
             difference <- setdiff(
@@ -94,6 +95,8 @@ testing_removed_variables <- function() {
                 )
             )
         }
+    } else {
+        difference <- NULL
     }
 
     #--------------------------------------------------
