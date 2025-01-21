@@ -208,7 +208,8 @@ cleaning_org_data <- function(
         if (!var %in% c(
             "is24_stadt_kreis", "kreis", "is24_bezirk_gemeinde",
             "is24_bundesland", "skid", "bgid", "objekt_beschreibung",
-            "einstelldatum", "version"
+            "einstelldatum", "version", "koid", "laid", "skid_id", "sc_id",
+            "ort"
         )) {
             targets::tar_assert_true(
                 # length(unique(housing_data_prep[[var]])) == 1,

@@ -39,7 +39,12 @@ helpers_deleted_variables <- function() {
         "betreut", # not used anymore
         "nebenraeume", # not used in REDC
         "einstelldatum", # not needed for now
-        "version" # not needed and can be easily confused with redc_version
+        "version", # not needed and can be easily confused with redc_version
+        "koid",
+        "laid",
+        "skid_id",
+        "sc_id",
+        "ort" # because will be generated through coordinates in georeferencing
     )
 
     #--------------------------------------------------
