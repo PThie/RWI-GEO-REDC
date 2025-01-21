@@ -70,11 +70,6 @@ cleaning_append_data <- function(
                 ~ .x != dplyr::lag(.x),
                 .names = "{.col}_diff"
             ),
-            # TODO: remove if not needed
-            # plz_diff = dplyr::case_when(
-            #     plz == dplyr::lag(plz) | spell == 1 ~ 0,
-            #     TRUE ~ 100
-            # ),
             #--------------------------------------------------
             # defining identical observations
             identical_set_1 = dplyr::case_when(
@@ -97,8 +92,6 @@ cleaning_append_data <- function(
                             ~ .x == FALSE
                         )
                     ) == length(helpers_dupID_variables()[["categorical_set_1"]])
-                    # TODO: remove if not needed
-                    # plz_diff == 0
                 ) ~ 1,
                 TRUE ~ 0
             ),
@@ -227,6 +220,18 @@ cleaning_append_data <- function(
         )) |>
         dplyr::ungroup() |>
         as.data.frame()
+
+    #--------------------------------------------------
+    # test for dupID that checks if there are missings in dupID
+
+    targets::tar_assert_true(
+        length(which(is.na(housing_data_prep$dupID_gen))) == 0,
+        msg = glue::glue(
+            "!!! WARNING: ",
+            "DupID contains missings.",
+            " (Error code: )"
+        )
+    )
     
     #--------------------------------------------------
     # return
