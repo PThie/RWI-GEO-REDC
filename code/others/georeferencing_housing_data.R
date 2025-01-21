@@ -191,33 +191,24 @@ georeferencing_housing_data <- function(
         dplyr::select(-idm)
 
     #----------------------------------------------
-    # fill blid and zipcodes
+    # define state ID and fill zipcodes
     # NOTE: filling algorithm uses the given information first and the
     # information from the spatial join second
 
     housing_data_prep <- housing_data_prep |>
+        # drop original state ID    
+        dplyr::select(-blid) |>
         dplyr::mutate(
-            blid = as.character(blid),
-            blid = dplyr::case_when(
-                nchar(blid) == 1 ~ paste0("0", blid),
-                TRUE ~ blid
-            ),
-            # recode proper NA for foalesce to work
-            blid = dplyr::case_when(
-                blid == as.character(helpers_missing_values()[["other"]]) ~ NA_character_,
-                TRUE ~ blid
-            ),
-            blid_aux = substring(gid2019, 1, 2),
-            # fill state ID (if missing) with ID obtained from spatial join
-            blid = data.table::fcoalesce(blid, blid_aux),
-            # do the same for zipcodes
+            # extract state ID from municipality ID
+            blid = substring(gid2019, 1, 2),
+            # replace missings in zipcode with "calculated" information
             plz = dplyr::case_when(
                 plz == as.character(helpers_missing_values()[["other"]]) ~ NA_character_,
                 TRUE ~ plz
             ),
             plz = data.table::fcoalesce(plz, plz2019)
         ) |>
-        dplyr::select(-c(blid_aux, plz2019)) |>
+        dplyr::select(plz2019) |>
         # recode missings again to match missing definition of REDC/RED
         tidyr::replace_na(list(
             blid = as.character(helpers_missing_values()[["other"]]),
