@@ -298,19 +298,6 @@ georeferencing_housing_data <- function(
         dplyr::select(-gkz)
 
     #----------------------------------------------
-    # export
-
-    fst::write.fst(
-        housing_data_prep,
-        file.path(
-            config_paths()[["data_path"]],
-            "processed",
-            config_globals()[["current_delivery"]],
-            "clean_data_georeferenced.fst"
-        )
-    )
-
-    #----------------------------------------------
     # return output
 
     return(housing_data_prep)
