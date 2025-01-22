@@ -18,3 +18,5 @@ _targets
 *.txt
 code/helpers/config.R
 .vscode/launch.json
+logs/
+.lintr
