@@ -32,7 +32,7 @@ georeferencing_housing_data <- function(
         dplyr::filter(
             geox != helpers_missing_values()[["other"]]
         )
-    
+
     #----------------------------------------------
     # transform the coordinate system of the Immo data
 
@@ -208,7 +208,7 @@ georeferencing_housing_data <- function(
             ),
             plz = data.table::fcoalesce(plz, plz2019)
         ) |>
-        dplyr::select(plz2019) |>
+        dplyr::select(-plz2019) |>
         # recode missings again to match missing definition of REDC/RED
         tidyr::replace_na(list(
             blid = as.character(helpers_missing_values()[["other"]]),
