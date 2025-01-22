@@ -126,13 +126,6 @@ targets_preparation_folders <- rlang::list2(
 )
 
 #--------------------------------------------------
-# MAYBE DELETE LATER
-# define column names from previous deliveries
-# NOTE: even though this is define in config as global, I am loading it here
-# as global to avoid reading the data set in the config specification over and
-# over again. This saves runtime.
-
-#--------------------------------------------------
 # Prepare original files for further processing
 # Adjust the file naming
 # NOTE: This step is only if the new delivery comes in subfolders (add else clause
@@ -151,6 +144,8 @@ targets_files <- rlang::list2(
 # read original data
 
 targets_reading <- rlang::list2(
+    #--------------------------------------------------
+    # housing data
     tar_file_read(
         org_data,
         file.path(
@@ -165,6 +160,14 @@ targets_reading <- rlang::list2(
             )
         )
     ),
+    #--------------------------------------------------
+    # microm (GRID) data
+    tar_fst(
+        microm_data,
+        reading_microm_data()
+    ),
+    #--------------------------------------------------
+    # spatial data
     tar_eval(
         list(
             tar_qs(
