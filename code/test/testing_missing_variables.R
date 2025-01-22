@@ -128,13 +128,13 @@ testing_missing_variables <- function(
     #--------------------------------------------------
     # export data
 
-    fst::write.fst(
+    arrow::write_parquet(
         housing_data,
         file.path(
             config_paths()[["data_path"]],
             "processed",
             config_globals()[["current_delivery"]],
-            "clean_data.fst"
+            "clean_data.parquet"
         )
     )
 

@@ -18,12 +18,12 @@ appending_waves <- function(
 
     data_storage <- list()
     for (del in deliveries) {
-        dta <- fst::read.fst(
+        dta <- arrow::read_parquet(
             file.path(
                 config_paths()[["data_path"]],
                 "processed",
                 paste0("Lieferung_", del),
-                "clean_data_georeferenced.fst"
+                "clean_data.parquet"
             )
         )
 
