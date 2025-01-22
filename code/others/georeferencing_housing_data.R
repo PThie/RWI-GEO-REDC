@@ -59,19 +59,6 @@ georeferencing_housing_data <- function(
         dplyr::rename(
             lon_gps = X,
             lat_gps = Y
-        ) |>
-        # round coordinates
-        # because through transformation it looks like that we have great precision
-        # in the geo data but there is actually an inaccuracy (ca. 10m I think)
-        dplyr::mutate(
-            lon_gps = round(
-                lon_gps,
-                digits = 4
-            ),
-            lat_gps = round(
-                lat_gps,
-                digits = 4
-            )
         )
 
     # merge to original data
