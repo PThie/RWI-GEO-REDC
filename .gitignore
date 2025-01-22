@@ -20,3 +20,4 @@ code/helpers/config.R
 .vscode/launch.json
 logs/
 .lintr
+code_testing.R
