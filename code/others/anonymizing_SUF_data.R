@@ -52,13 +52,22 @@ anonymizing_SUF_data <- function(
     ))
 
     # report number of missings before and after censoring
-    missings <- as.data.frame(cbind(
+    missings <- as.data.frame(rbind(
         total_NOBS = nrow(merged_data),
-        missing_NOBS_before_censoring = num_missing_before,
-        missing_NOBS_before_censoring_perc = (num_missing_before / nrow(merged_data)) * 100,
-        missing_NOBS_after_censoring = num_missing_after,
-        missing_NOBS_after_censoring_perc = (num_missing_after / nrow(merged_data)) * 100
-    ))
+        missing_before_censoring = num_missing_before,
+        missing_before_censoring_perc = (num_missing_before / nrow(merged_data)) * 100,
+        missing_after_censoring = num_missing_after,
+        missing_after_censoring_perc = (num_missing_after / nrow(merged_data)) * 100
+    )) |>
+        dplyr::rename(NOBS = 1) |>
+        dplyr::mutate(
+            NOBS = round(NOBS, 2)
+        )
+    
+    missings$var <- rownames(missings)
+    rownames(missings) <- NULL
+    missings <- missings |>
+        dplyr::relocate(var)
 
     # export for documentation
     gdata::write.fwf(
@@ -68,7 +77,8 @@ anonymizing_SUF_data <- function(
             config_globals()[["current_version"]],
             "missings_grid_id.txt"
         ),
-        rownames = FALSE
+        rownames = FALSE,
+        colnames = FALSE
     )
 
     #--------------------------------------------------
