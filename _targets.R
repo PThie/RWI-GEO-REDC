@@ -204,6 +204,16 @@ targets_reading <- rlang::list2(
 # already have been cleaned.
 
 targets_preparation <- rlang::list2(
+    #--------------------------------------------------
+    # preparing microm (GRID) data
+    tar_fst(
+        microm_data_cleaned,
+        cleaning_microm_data(
+            microm_data = microm_data
+        )
+    ),
+    #--------------------------------------------------
+    # preparing housing data
     tar_fst(
         column_infos_benchmark,
         exporting_column_infos(
