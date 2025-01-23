@@ -288,6 +288,22 @@ targets_combine_cleaning <- rlang::list2(
 )
 
 #--------------------------------------------------
+# SUF cleaning
+
+targets_suf_cleaning <- rlang::list2(
+    tar_fst(
+        housing_data_suf_anonymized,
+        anonymizing_SUF_data(
+            housing_data = housing_data_append_cleaned,
+            microm_data = microm_data_cleaned
+        )
+    )
+)
+
+#--------------------------------------------------
+# Export
+
+#--------------------------------------------------
 # Unit testing
 # TODO: entire block
 
@@ -324,5 +340,6 @@ rlang::list2(
     targets_preparation,
     targets_append,
     targets_combine_cleaning,
+    targets_suf_cleaning,
     targets_pipeline_stats
 )
