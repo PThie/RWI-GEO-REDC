@@ -213,7 +213,9 @@ cleaning_append_data <- function(
             )
         ) |>
         dplyr::select(-c(
-            dplyr::contains("month"),
+            "start_month",
+            "end_month",
+            "end_month_prev_spell",
             dplyr::contains("exceeding"),
             dplyr::contains("diff"),
             dplyr::contains("identical")
@@ -229,7 +231,7 @@ cleaning_append_data <- function(
         msg = glue::glue(
             "!!! WARNING: ",
             "DupID contains missings.",
-            " (Error code: )"
+            " (Error code: cad#1)"
         )
     )
     
