@@ -35,8 +35,8 @@ testing_missing_variables <- function(
 
     # apply function to calculate missings and combine both types
     missings <- rbind(
-        calculating_missings(is.numeric, missing_type = c(-9)),
-        calculating_missings(is.character, missing_type = c("-9"))
+        calculating_missings(is.numeric, missing_type = c(-9, -7, -6)),
+        calculating_missings(is.character, missing_type = c("-9", "-7", "-6"))
     ) |>
         dplyr::arrange(dplyr::desc(missings)) |>
         # calculate percentage of missings
