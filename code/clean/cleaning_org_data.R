@@ -969,30 +969,63 @@ cleaning_org_data <- function(
         names()
     
     int_cols <- c(
-        "obid", "version", "koid", "laid", "skid_id", "sc_id",
-        "anbieter", "duplicateid", "letzte_modernisierung",
+        "obid", "anbieter", "duplicateid", "letzte_modernisierung",
         "baujahr", "blid", "immobilientyp", "objektzustand", "ausstattung",
         "heizungsart", "energieausweistyp", "energieeffizienzklasse",
         "ejahr", "emonat", "ajahr", "amonat", "kategorie_business", 
         "laufzeittage", "gkz", "heizkosten_in_wm_enthalten",
-        "bauphase", "kaufvermietet", "haustier_erlaubt", bef_cols
+        "bauphase", "haustier_erlaubt", bef_cols,
+        "denkmalobjekt", "aufzug", "keller", "parkplatz", "rollstuhlgerecht",
+        "ev_wwenthalten", "mietekaution_type"
     )
 
     # numeric columns
     num_cols <- c(
         "grundstuecksflaeche", "nutzflaeche", "wohnflaeche", "zimmeranzahl",
         "kaufpreis", "mietekalt", "nebenkosten", "geox", "geoy", "miete_proqm",                                 
-        "teilbar_ab", "nebenkosten_proqm", "ev_kennwert", "heizkosten",
-        "mietewarm", "hits", "click_schnellkontakte", "liste_show", "liste_match",
-        "click_weitersagen", "click_url"  
+        "teilbar_ab", "nebenkosten_proqm", "ev_kennwert",
+        "hits", "click_schnellkontakte", "liste_show", "liste_match",
+        "click_weitersagen", "click_url", "mietekaution_months", "mietekaution_price"
     )
 
     # character columns
     char_cols <- c(
-        "freiab", "courtage", "plz", "ort",
+        "freiab", "courtage", "plz",
         "strasse", "hausnr", "redc_version", "redc_delivery", "etage"
     )
 
+    # Test that all columns are covered
+    all_variables <- c(
+        int_cols,
+        num_cols,
+        char_cols
+    )
+
+    for (var in names(housing_data_prep)) {
+        targets::tar_assert_true(
+            var %in% all_variables,
+            msg = glue::glue(
+                "!!! WARNING: ",
+                "Variable {var} not covered in the type setting. ",
+                "(Error code: cod#7)"
+            )
+        )
+    }
+
+    # Test that columns specified are not covered in variables that are supposed
+    # to be deleted
+    for (var in helpers_deleted_variables()) {
+        targets::tar_assert_true(
+            !(var %in% all_variables),
+            msg = glue::glue(
+                "!!! WARNING: ",
+                "Variable {var} is specified to be deleted but is covered in the type setting. ",
+                "(Error code: cod#8)"
+            )
+        )
+    }
+
+    # set types
     for (col in int_cols) {
         # NOTE: ignore columns that have been deleted. Otherwise, they would be
         # added here again
