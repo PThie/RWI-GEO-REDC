@@ -303,6 +303,12 @@ targets_suf_cleaning <- rlang::list2(
             housing_data = housing_data_translated,
             microm_data = microm_data_cleaned
         )
+    ),
+    tar_fst(
+        housing_data_suf_cleaned,
+        cleaning_SUF_data(
+            housing_data = housing_data_suf_anonymized
+        )
     )
 )
 
