@@ -83,7 +83,8 @@ translating_variables <- function(
         "kategorie_business",
         "nebenkosten_proqm",
         "mietekaution_price",
-        "mietekaution_type"
+        "mietekaution_type",
+        "mietekaution_months"
     )
 
     #--------------------------------------------------
@@ -142,7 +143,8 @@ translating_variables <- function(
         "kategorie_business" = "category_business",
         "nebenkosten_proqm" = "ancillary_costs_per_sqm",
         "mietekaution_price" = "security_deposit_price",
-        "mietekaution_type" = "security_deposit_type"
+        "mietekaution_type" = "security_deposit_type",
+        "mietekaution_months" = "security_deposit_months"
     )
 
     # Check that translated variables and translations match
