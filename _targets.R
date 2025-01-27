@@ -284,6 +284,12 @@ targets_combine_cleaning <- rlang::list2(
         cleaning_append_data(
             housing_data = housing_data_appended
         )
+    ),
+    tar_fst(
+        housing_data_translated,
+        translating_variables(
+            housing_data = housing_data_append_cleaned
+        )
     )
 )
 
@@ -294,7 +300,7 @@ targets_suf_cleaning <- rlang::list2(
     tar_fst(
         housing_data_suf_anonymized,
         anonymizing_SUF_data(
-            housing_data = housing_data_append_cleaned,
+            housing_data = housing_data_translated,
             microm_data = microm_data_cleaned
         )
     )
