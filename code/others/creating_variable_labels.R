@@ -246,7 +246,8 @@ creating_variable_labels <- function(
                         "kname2019",
                         "obid",
                         "redc_version",
-                        "street"
+                        "street",
+                        "zipcode"
                     ) ~ "character",
                     variable %in% c(
                         "basement",
@@ -263,8 +264,7 @@ creating_variable_labels <- function(
                         "protected_building",
                         "provider",
                         "security_deposit_type",
-                        "wheelchair_accessible",
-                        "zipcode"
+                        "wheelchair_accessible"
                     ) ~ "categorical",
                     grepl("bef", variable) ~ "numeric"
                 )
