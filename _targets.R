@@ -313,6 +313,18 @@ targets_suf_cleaning <- rlang::list2(
 )
 
 #--------------------------------------------------
+# Documentation
+
+targets_documentation <- rlang::list2(
+    tar_fst(
+        variable_labels,
+        creating_variable_labels(
+            housing_data = housing_data_translated
+        )
+    )
+)
+
+#--------------------------------------------------
 # Export
 
 #--------------------------------------------------
@@ -353,5 +365,6 @@ rlang::list2(
     targets_append,
     targets_combine_cleaning,
     targets_suf_cleaning,
+    targets_documentation,
     targets_pipeline_stats
 )
