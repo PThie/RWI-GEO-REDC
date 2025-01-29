@@ -76,7 +76,7 @@ cleaning_org_data <- function(
                 anbietertyp == "Gewerbeanbieter" ~ 6,
                 anbietertyp == "Hausbau" ~ 7,
                 anbietertyp == "Umzug" ~ 8,
-                anbietertyp == "unbekannt" ~ 9
+                anbietertyp == "unbekannt" ~ helpers_missing_values()[["not_specified"]]
             ),
             anbieter = as.integer(anbieter),
             #--------------------------------------------------
@@ -894,7 +894,10 @@ cleaning_org_data <- function(
             ),
             #--------------------------------------------------
             # security deposit type
+            mietekaution_type = NA,
             mietekaution_type = dplyr::case_when(
+                # definition for no deposit
+                mietekaution_months == 0 ~ 6,
                 # definitions of cold rent
                 grepl("netto|kalt|Grundmiete", mietekaution, ignore.case = TRUE) ~ 1,
                 grepl("NKM|KM|NK|NM", mietekaution) ~ 1,
@@ -916,8 +919,6 @@ cleaning_org_data <- function(
                 grepl("Avall", mietekaution, ignore.case = TRUE) ~ 4,
                 # definition when deposit is in money-value
                 !is.na(mietekaution_price) ~ 5,
-                # definition for no deposit
-                mietekaution_months == 0 ~ 6,
                 TRUE ~ helpers_missing_values()[["not_specified"]]
             ),
             #--------------------------------------------------
