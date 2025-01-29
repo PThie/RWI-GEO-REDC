@@ -321,6 +321,13 @@ targets_documentation <- rlang::list2(
         creating_variable_labels(
             housing_data = housing_data_translated
         )
+    ),
+    tar_fst(
+        value_labels,
+        creating_value_labels(
+            housing_data = housing_data_translated,
+            variable_labels = variable_labels
+        )
     )
 )
 
