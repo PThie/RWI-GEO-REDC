@@ -59,6 +59,37 @@ creating_folder_structure <- function() {
     }
 
     #--------------------------------------------------
+    # subfolders for data export in on-site and SUF
+
+    for (data_folder in c("on-site", "SUF")) {
+        for (export_type in config_globals()[["exported_file_formats"]]) {
+            ifelse(
+                !dir.exists(
+                    file.path(
+                        config_paths()[["data_path"]],
+                        data_folder,
+                        config_globals()[["current_version"]],
+                        export_type
+                    )
+                ),
+                yes = dir.create(
+                    file.path(
+                        config_paths()[["data_path"]],
+                        data_folder,
+                        config_globals()[["current_version"]],
+                        export_type
+                    )
+                ),
+                no = cli::cli_alert_success(
+                    cli::col_green(
+                        "Export directory for \"{export_type}\" data folder already exists."
+                    )
+                )
+            )
+        }
+    }
+
+    #--------------------------------------------------
     # create version folder in output
 
     ifelse(
