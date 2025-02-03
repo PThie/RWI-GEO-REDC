@@ -34,6 +34,9 @@ helpers_target_names <- function() {
         "exported_file_formats" = exported_file_formats,
         "suf_exported_data" = glue::glue(
             "suf_exported_data_{exported_file_formats}"
+        ),
+        "suf_compliance_test" = glue::glue(
+            "suf_compliance_test_{exported_file_formats}"
         )
     )
     
