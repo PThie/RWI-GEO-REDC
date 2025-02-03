@@ -12,6 +12,7 @@ helpers_target_names <- function() {
 
     # NOTE: define outside list to be able to use in list
     spatial_units_english <- c("district", "municipality", "zip_code")
+    exported_file_formats <- c("parquet", "csv")
 
     target_names <- list(
         #--------------------------------------------------
@@ -27,6 +28,12 @@ helpers_target_names <- function() {
         ),
         "spatial_unit_names" = glue::glue(
             "spatial_unit_names_{spatial_units_english}"
+        ),
+        #--------------------------------------------------
+        # names for testing
+        "exported_file_formats" = exported_file_formats,
+        "suf_exported_data" = glue::glue(
+            "suf_exported_data_{exported_file_formats}"
         )
     )
     
