@@ -18,6 +18,10 @@ helpers_unique_categories <- function() {
             "unique_values" = 2,
             "type" = "dummy"
         ) ,
+        "blid" = list(
+            "unique_values" = 16,
+            "type" = "categorical"
+        ),
         "category_business" = list(
             "unique_values" = 53,
             "type" = "categorical"
@@ -73,6 +77,10 @@ helpers_unique_categories <- function() {
         "wheelchair_accessible" = list(
             "unique_values"= 2,
             "type" = "dummy"
+        ),
+        "redc_delivery" = list(
+            "unique_values" = length(config_globals()[["deliveries"]]),
+            "type" = "categorical"
         )
     )
 

@@ -225,14 +225,12 @@ creating_variable_labels <- function(
                         "lon_gps",
                         "lon_utm",
                         "plot_area",
-                        "redc_delivery",
                         "rent_per_sqm",
                         "security_deposit_months",
                         "security_deposit_price",
                         "spell",
                         "uniqueID_gen",
-                        "usable_area",
-                        "blid"
+                        "usable_area"
                     ) ~ "numeric",
                     variable %in% c(
                         "available_from",
@@ -264,7 +262,9 @@ creating_variable_labels <- function(
                         "protected_building",
                         "provider",
                         "security_deposit_type",
-                        "wheelchair_accessible"
+                        "wheelchair_accessible",
+                        "blid",
+                        "redc_delivery"
                     ) ~ "categorical",
                     grepl("bef", variable) ~ "numeric"
                 )
