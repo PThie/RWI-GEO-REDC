@@ -37,6 +37,9 @@ helpers_target_names <- function() {
         ),
         "suf_compliance_test" = glue::glue(
             "suf_compliance_test_{exported_file_formats}"
+        ),
+        "suf_anonymization_test" = glue::glue(
+            "suf_anonymization_test_{exported_file_formats}"
         )
     )
     
