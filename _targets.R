@@ -27,6 +27,9 @@ suppressPackageStartupMessages({
     library(gdata)
     library(qs)
     library(sf)
+    library(data.table)
+    library(stringr)
+    library(arrow)
 })
 
 #--------------------------------------------------
@@ -362,21 +365,34 @@ targets_export <- rlang::list2(
 # Unit testing
 
 targets_unit_testing <- rlang::list2(
-    tar_file_read(
-        suf_exported_data,
-        file.path(
-            config_paths()[["data_path"]],
-            "SUF",
-            config_globals()[["current_version"]],
-            "parquet",
-            paste0(
-                "REDC_",
-                config_globals()[["current_version"]],
-                "_SUF.parquet"
+    tar_eval(
+        list(
+            tar_file_read(
+                suf_exported_data,
+                file.path(
+                    config_paths()[["data_path"]],
+                    "SUF",
+                    config_globals()[["current_version"]],
+                    exported_file_formats,
+                    paste0(
+                        "REDC_",
+                        config_globals()[["current_version"]],
+                        "_SUF.",
+                        exported_file_formats
+                    )
+                ),
+                reading_exported_data(
+                    data_path = !!.x,
+                    file_format = exported_file_formats
+                )
             )
         ),
-        arrow::read_parquet(!!.x)
-    ),
+        values = list(
+            suf_exported_data = rlang::syms(helpers_target_names()[["suf_exported_data"]]),
+            exported_file_formats = helpers_target_names()[["exported_file_formats"]]
+        )
+    )
+
     # check that all variables have the right type
 
     # check that all variables are in reasonable ranges
