@@ -62,7 +62,7 @@ tar_option_set(
 source(
     file.path(
         here::here(),
-        "code",
+        "src",
         "helpers",
         "config.R"
     )
@@ -360,9 +360,23 @@ targets_export <- rlang::list2(
 
 #--------------------------------------------------
 # Unit testing
-# TODO: entire block
 
 targets_unit_testing <- rlang::list2(
+    tar_file_read(
+        suf_exported_data,
+        file.path(
+            config_paths()[["data_path"]],
+            "SUF",
+            config_globals()[["current_version"]],
+            "parquet",
+            paste0(
+                "REDC_",
+                config_globals()[["current_version"]],
+                "_SUF.parquet"
+            )
+        ),
+        arrow::read_parquet(!!.x)
+    ),
     # check that all variables have the right type
 
     # check that all variables are in reasonable ranges
@@ -398,5 +412,6 @@ rlang::list2(
     targets_suf_cleaning,
     targets_documentation,
     targets_export,
+    targets_unit_testing,
     targets_pipeline_stats
 )
