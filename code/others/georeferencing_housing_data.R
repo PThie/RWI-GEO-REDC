@@ -186,8 +186,8 @@ georeferencing_housing_data <- function(
         # drop original state ID    
         dplyr::select(-blid) |>
         dplyr::mutate(
-            # extract state ID from municipality ID
-            blid = substring(gid2019, 1, 2),
+            # extract state ID from district ID
+            blid = substring(kid2019, 1, 2),
             # replace missings in zipcode with "calculated" information
             plz = dplyr::case_when(
                 plz == as.character(helpers_missing_values()[["other"]]) ~ NA_character_,
@@ -239,6 +239,7 @@ georeferencing_housing_data <- function(
     # add geo IDs to the data set with no coordinates
 
     housing_data_wo_coords <- housing_data_wo_coords |>
+        dplyr::select(-blid) |>
         dplyr::mutate(
             lon_gps = helpers_missing_values()[["other"]],
             lat_gps = helpers_missing_values()[["other"]],
@@ -257,12 +258,11 @@ georeferencing_housing_data <- function(
                 TRUE ~ NA_character_
             ),
             # set state ID as character to match the data set with coordinates
-            blid = as.character(blid),
-            blid = dplyr::case_when(
-                nchar(blid) == 1 ~ paste0("0", blid),
-                TRUE ~ blid
-            )
-        )
+            blid = substring(kid2019, 1, 2)
+        ) |>
+        tidyr::replace_na(list(
+            blid = as.character(helpers_missing_values()[["other"]])
+        ))
 
     # merge municipality names
     housing_data_wo_coords <- merge(
