@@ -339,14 +339,24 @@ targets_documentation <- rlang::list2(
             )
         ),
         values = list(
-            spatial_unit_names = rlang::syms(helpers_target_names()[["spatial_unit_names"]]),
-            spatial_data = rlang::syms(helpers_target_names()[["spatial_data"]])
+            spatial_unit_names = rlang::syms(helpers_target_names()[["spatial_unit_names"]][1:2]),
+            spatial_data = rlang::syms(helpers_target_names()[["spatial_data"]][1:2])
         )
     )
 )
 
 #--------------------------------------------------
 # Export
+
+targets_export <- rlang::list2(
+    tar_target(
+        housing_data_exported,
+        exporting_housing_data(
+            onsite_data = housing_data_translated,
+            suf_data = housing_data_suf_cleaned
+        )
+    )
+)
 
 #--------------------------------------------------
 # Unit testing
@@ -387,5 +397,6 @@ rlang::list2(
     targets_combine_cleaning,
     targets_suf_cleaning,
     targets_documentation,
+    targets_export,
     targets_pipeline_stats
 )
