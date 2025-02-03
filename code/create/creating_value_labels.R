@@ -29,6 +29,19 @@ creating_value_labels <- function(
     # create vector of variable names (according to length of unique values)
     # create vector of unique values
 
+    # check that all categorical variables have been assign a maximum value
+    for (var in var_names) {
+        targets::tar_assert_true(
+            var %in% names(helpers_unique_categories()),
+            msg = glue::glue(
+                "!!! WARNING: ",
+                "Variable '{var}' has not been assigned a maximum value.",
+                " (Error code: cvl#1)"
+            )
+        )
+    }
+
+    # actual creation
     var_names_rep <- c()
     unique_values <- c()
 
@@ -68,6 +81,23 @@ creating_value_labels <- function(
                 #--------------------------------------------------
                 variable == "basement" & value == 0 ~ "No",
                 variable == "basement" & value == 1 ~ "Yes",
+                #--------------------------------------------------
+                variable == "blid" & value == 1 ~ "Schleswig Holstein",
+                variable == "blid" & value == 2 ~ "Hamburg",
+                variable == "blid" & value == 3 ~ "Lower Saxony",
+                variable == "blid" & value == 4 ~ "Free Hanseatic City of Bremen",
+                variable == "blid" & value == 5 ~ "North Rhine-Westphalia",
+                variable == "blid" & value == 6 ~ "Hesse",
+                variable == "blid" & value == 7 ~ "Rhineland-Palatine",
+                variable == "blid" & value == 8 ~ "Baden-Wuerttemberg",
+                variable == "blid" & value == 9 ~ "Bavaria",
+                variable == "blid" & value == 10 ~ "Saarland",
+                variable == "blid" & value == 11 ~ "Berlin",
+                variable == "blid" & value == 12 ~ "Brandenburg",
+                variable == "blid" & value == 13 ~ "Mecklenburg-Western Pommerania",
+                variable == "blid" & value == 14 ~ "The Free State of Saxony",
+                variable == "blid" & value == 15 ~ "Saxony-Anhalt",
+                variable == "blid" & value == 16 ~ "The Free State of Thuringia",
                 #--------------------------------------------------
                 variable == "category_business" & value == 1 ~ "Office and commercial buildings",
                 variable == "category_business" & value == 2 ~ "Store",
@@ -201,6 +231,8 @@ creating_value_labels <- function(
                 variable == "provider" & value == 7 ~ "House construction",
                 variable == "provider" & value == 8 ~ "Relocation",
                 #--------------------------------------------------
+                variable == "redc_delivery" & value == 1 ~ "Jun 2023",
+                #--------------------------------------------------
                 variable == "security_deposit_type" & value == 1 ~ "Cold rent",
                 variable == "security_deposit_type" & value == 2 ~ "Warm rent",
                 variable == "security_deposit_type" & value == 3 ~ "Other rent (cold or warm)",
@@ -215,11 +247,11 @@ creating_value_labels <- function(
 
     # Check for no NA in values (otherwise missed to specify a label)
     targets::tar_assert_true(
-        length(which(is.na(value_labels$value))) == 0,
+        length(which(is.na(value_labels$label))) == 0,
         msg = glue::glue(
             "!!! WARNING: ",
             "Variable(s) have been missed to specify a label.",
-            " (Error code: cvl#1)"
+            " (Error code: cvl#2)"
         )
     )
 
