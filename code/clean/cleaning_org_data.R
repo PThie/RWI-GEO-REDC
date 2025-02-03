@@ -488,6 +488,7 @@ cleaning_org_data <- function(
             )
     }
 
+    # create nebenkosten pro qm
     housing_data_prep <- housing_data_prep |>
         dplyr::mutate(
             # separate nebenkosten from nebenkosten per square meter if "per
@@ -499,35 +500,52 @@ cleaning_org_data <- function(
             nebenkosten = dplyr::case_when(
                 !is.na(miete_proqm) ~ helpers_missing_values()[["other"]],
                 TRUE ~ nebenkosten
-            ), 
-            # censor implausible values for square meter variables
-            # different thresholds compared to below because there are some
-            # large outliers that are clearly in "total-terms" and not "per
-            # square meter"
+            )
+        )
+
+    # create threshold based on percentiles
+    thresholds_nebenkosten_proqm <- helpers_calculate_censoring_threshold(
+        housing_data = housing_data_prep,
+        variable_of_interest = "nebenkosten_proqm",
+        variable_eng = "ancillary_costs_per_sqm",
+        threshold = c(0.01, 0.99),
+        threshold_type = "percentile"
+    )
+
+    thresholds_miete_proqm <- helpers_calculate_censoring_threshold(
+        housing_data = housing_data_prep,
+        variable_of_interest = "miete_proqm",
+        variable_eng = "rent_per_sqm",
+        threshold = c(0.01, 0.99),
+        threshold_type = "percentile"
+    )
+    
+    # censor implausible values for square meter variables
+    # different thresholds compared to below because there are some
+    # large outliers that are clearly in "total-terms" and not "per
+    # square meter"
+    housing_data_prep <- housing_data_prep |>
+        dplyr::mutate(
             nebenkosten_proqm = dplyr::case_when(
-                nebenkosten_proqm <= as.numeric(quantile(
-                    nebenkosten_proqm[(nebenkosten_proqm != helpers_missing_values()[["other"]])],
-                    prob = 0.1,
-                    na.rm = TRUE
-                )) ~ helpers_missing_values()[["implausible"]],
-                nebenkosten_proqm >= as.numeric(quantile(
-                    nebenkosten_proqm[(nebenkosten_proqm != helpers_missing_values()[["other"]])],
-                    prob = 0.95,
-                    na.rm = TRUE
-                )) ~ helpers_missing_values()[["implausible"]],
+                (
+                    nebenkosten_proqm <= thresholds_nebenkosten_proqm[["value"]][1] &
+                    nebenkosten_proqm != helpers_missing_values()[["other"]]
+                ) ~ helpers_missing_values()[["implausible"]],
+                (
+                    nebenkosten_proqm >= thresholds_nebenkosten_proqm[["value"]][2] &
+                    nebenkosten_proqm != helpers_missing_values()[["other"]]
+                ) ~ helpers_missing_values()[["implausible"]],
                 TRUE ~ nebenkosten_proqm
             ),
             miete_proqm = dplyr::case_when(
-                miete_proqm <= as.numeric(quantile(
-                    miete_proqm[(miete_proqm != helpers_missing_values()[["other"]])],
-                    prob = 0.1,
-                    na.rm = TRUE
-                )) ~ helpers_missing_values()[["implausible"]],
-                miete_proqm >= as.numeric(quantile(
-                    miete_proqm[(miete_proqm != helpers_missing_values()[["other"]])],
-                    prob = 0.99,
-                    na.rm = TRUE
-                )) ~ helpers_missing_values()[["implausible"]],
+                (
+                    miete_proqm <= thresholds_miete_proqm[["value"]][1] &
+                    miete_proqm != helpers_missing_values()[["other"]]
+                ) ~ helpers_missing_values()[["implausible"]],
+                (
+                    miete_proqm >= thresholds_miete_proqm[["value"]][2] &
+                    miete_proqm != helpers_missing_values()[["other"]]
+                ) ~ helpers_missing_values()[["implausible"]],
                 TRUE ~ miete_proqm
             )
         )
@@ -535,6 +553,7 @@ cleaning_org_data <- function(
     #--------------------------------------------------
     # censor implausible values
 
+    # define numeric columns
     cols <- c(
         "kaufpreis",
         "grundstuecksflaeche",
@@ -546,6 +565,23 @@ cleaning_org_data <- function(
         "nebenkosten"
     )
 
+    # calculate thresholds
+    thresholds_list <- list()
+    thresholds_dataframes_list <- list()
+    for (col in cols) {
+        thresholds_var <- helpers_calculate_censoring_threshold(
+            housing_data = housing_data_prep,
+            variable_of_interest = col,
+            variable_eng = helpers_translations()[[col]],
+            threshold = c(0.001, 0.999),
+            threshold_type = "percentile"
+        )
+
+        thresholds_list[[col]] <- thresholds_var
+        thresholds_dataframes_list[[col]] <- thresholds_list[[col]][["dataframe"]]
+    }
+
+    # apply censoring
     housing_data_prep <- housing_data_prep |>
         dplyr::mutate(
             # make sure that the variables are numeric
@@ -555,18 +591,15 @@ cleaning_org_data <- function(
             ),
             dplyr::across(
                 .cols = cols,
-                # dropping values below the 0.1 percentile and above the 99.9 percentile
                 ~ dplyr::case_when(
-                    .x <= as.numeric(quantile(
-                        .x[(.x != helpers_missing_values()[["other"]])],
-                        prob = 0.001,
-                        na.rm = TRUE
-                    )) ~ helpers_missing_values()[["implausible"]],
-                    .x >= as.numeric(quantile(
-                        .x[(.x != helpers_missing_values()[["other"]])],
-                        prob = 0.999,
-                        na.rm = TRUE
-                    )) ~ helpers_missing_values()[["implausible"]],
+                    (
+                        .x <= thresholds_list[[dplyr::cur_column()]][["value"]][1] &
+                        .x != helpers_missing_values()[["other"]]
+                    ) ~ helpers_missing_values()[["implausible"]],
+                    (
+                        .x >= thresholds_list[[dplyr::cur_column()]][["value"]][2] &
+                        .x != helpers_missing_values()[["other"]]
+                    ) ~ helpers_missing_values()[["implausible"]],
                     TRUE ~ .x
                 )
             ),
@@ -594,6 +627,66 @@ cleaning_org_data <- function(
                 TRUE ~ plz
             )
         )
+
+    # construct threshold dataframe for reporting for last modernization,
+    # construction year and zip code
+    thresholds_letzte_modernisierung_upper <- data.frame(
+        variable = helpers_translations()[["letzte_modernisierung"]],
+        threshold = config_globals()[["max_year"]],
+        threshold_type = "maximum year",
+        value = config_globals()[["max_year"]]
+    )
+
+    thresholds_letzte_modernisierung_lower <- data.frame(
+        variable = helpers_translations()[["letzte_modernisierung"]],
+        threshold = helpers_implausible_values()[["last_renovation_max_value"]],
+        threshold_type = "minimum year",
+        value = helpers_implausible_values()[["last_renovation_max_value"]]
+    )
+
+    thresholds_baujahr_upper <- data.frame(
+        variable = helpers_translations()[["baujahr"]],
+        threshold = config_globals()[["max_year"]],
+        threshold_type = "maximum year",
+        value = config_globals()[["max_year"]]
+    )
+
+    thresholds_baujahr_lower <- data.frame(
+        variable = helpers_translations()[["baujahr"]],
+        threshold = helpers_implausible_values()[["construction_year_max_value"]],
+        threshold_type = "minimum year",
+        value = helpers_implausible_values()[["construction_year_max_value"]]
+    )
+
+    thresholds_plz <- data.frame(
+        variable = helpers_translations()[["plz"]],
+        threshold = 4,
+        threshold_type = "character length",
+        value = 4
+    )
+
+    # combine all calculated threshold for reporting
+    all_thresholds <- rbind(
+        thresholds_nebenkosten_proqm[["dataframe"]],
+        thresholds_miete_proqm[["dataframe"]],
+        data.table::rbindlist(thresholds_dataframes_list),
+        thresholds_letzte_modernisierung_lower,
+        thresholds_letzte_modernisierung_upper,
+        thresholds_baujahr_lower,
+        thresholds_baujahr_upper,
+        thresholds_plz
+    )
+
+    # export thresholds
+    openxlsx::write.xlsx(
+        all_thresholds,
+        file.path(
+            config_paths()[["output_path"]],
+            config_globals()[["current_version"]],
+            "threshold_censoring.xlsx"
+        ),
+        rowNames = FALSE
+    )
 
     #--------------------------------------------------
     # checks
