@@ -367,6 +367,8 @@ targets_export <- rlang::list2(
 targets_unit_testing <- rlang::list2(
     tar_eval(
         list(
+            #--------------------------------------------------
+            # Reading the exported SUF data
             tar_file_read(
                 suf_exported_data,
                 file.path(
@@ -385,11 +387,21 @@ targets_unit_testing <- rlang::list2(
                     data_path = !!.x,
                     file_format = exported_file_formats
                 )
+            ),
+            #--------------------------------------------------
+            # Test whether all variables have been deleted that are sensitive
+            tar_target(
+                suf_compliance_test,
+                testing_suf_compliance(
+                    suf_data = suf_exported_data,
+                    file_format = exported_file_formats
+                )
             )
         ),
         values = list(
             suf_exported_data = rlang::syms(helpers_target_names()[["suf_exported_data"]]),
-            exported_file_formats = helpers_target_names()[["exported_file_formats"]]
+            exported_file_formats = helpers_target_names()[["exported_file_formats"]],
+            suf_compliance_test = rlang::syms(helpers_target_names()[["suf_compliance_test"]])
         )
     )
 
