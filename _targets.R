@@ -328,6 +328,20 @@ targets_documentation <- rlang::list2(
             housing_data = housing_data_translated,
             variable_labels = variable_labels
         )
+    ),
+    tar_eval(
+        list(
+            tar_fst(
+                spatial_unit_names,
+                exporting_spatial_unit_names(
+                    spatial_units = spatial_data
+                )
+            )
+        ),
+        values = list(
+            spatial_unit_names = rlang::syms(helpers_target_names()[["spatial_unit_names"]]),
+            spatial_data = rlang::syms(helpers_target_names()[["spatial_data"]])
+        )
     )
 )
 
