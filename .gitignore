@@ -16,7 +16,7 @@ RWI-GEO-REDC.Rproj
 _targets
 .Rhistory
 *.txt
-code/helpers/config.R
+src/helpers/config.R
 .vscode/launch.json
 logs/
 .lintr
