@@ -392,16 +392,26 @@ targets_unit_testing <- rlang::list2(
             # Test whether all variables have been deleted that are sensitive
             tar_target(
                 suf_compliance_test,
-                testing_suf_compliance(
+                testing_SUF_compliance(
                     suf_data = suf_exported_data,
                     file_format = exported_file_formats
+                )
+            ),
+            #--------------------------------------------------
+            # Test whether anonymization has been done correctly
+            tar_target(
+                suf_anonymization_test,
+                testing_SUF_anonymization(
+                    suf_data = suf_exported_data,
+                    microm_data = microm_data_cleaned
                 )
             )
         ),
         values = list(
             suf_exported_data = rlang::syms(helpers_target_names()[["suf_exported_data"]]),
             exported_file_formats = helpers_target_names()[["exported_file_formats"]],
-            suf_compliance_test = rlang::syms(helpers_target_names()[["suf_compliance_test"]])
+            suf_compliance_test = rlang::syms(helpers_target_names()[["suf_compliance_test"]]),
+            suf_anonymization_test = rlang::syms(helpers_target_names()[["suf_anonymization_test"]])
         )
     )
 
