@@ -107,49 +107,11 @@ translating_variables <- function(
     }
 
     #--------------------------------------------------
-    # Define translations
-    # NOTE: Order has to match the order of translate_variables
-
-    translations <- c(
-        "freiab" = "available_from",
-        "plz" = "zipcode",
-        "strasse" = "street",
-        "hausnr" = "house_number",
-        "immobilientyp" = "property_type",
-        "objektzustand" = "property_condition",
-        "ausstattung" = "endowment",
-        "mietekalt" = "cold_rent",
-        "nebenkosten" = "ancillary_costs",
-        "courtage" = "commission",
-        "kaufpreis" = "listing_price",
-        "baujahr" = "construction_year",
-        "letzte_modernisierung" = "last_modernization",
-        "grundstuecksflaeche" = "plot_area",
-        "nutzflaeche" = "usable_area",
-        "etage" = "floor",    
-        "denkmalobjekt" = "protected_building",
-        "aufzug" = "elevator",
-        "keller" = "basement",
-        "parkplatz" = "parking",
-        "rollstuhlgerecht" = "wheelchair_accessible",
-        "heizungsart" = "heating_type",
-        "energieausweistyp" = "energy_certificate_type",
-        "ev_kennwert" = "energy_consumption_index",
-        "energieeffizienzklasse" = "energy_efficiency_class",
-        "laufzeittage" = "duration_days",
-        "miete_proqm" = "rent_per_sqm",
-        "teilbar_ab" = "divisible_from",
-        "anbieter" = "provider",
-        "kategorie_business" = "category_business",
-        "nebenkosten_proqm" = "ancillary_costs_per_sqm",
-        "mietekaution_price" = "security_deposit_price",
-        "mietekaution_type" = "security_deposit_type",
-        "mietekaution_months" = "security_deposit_months"
-    )
+    # translations
 
     # Check that translated variables and translations match
     targets::tar_assert_true(
-        length(translate_variables) == length(translations),
+        length(translate_variables) == length(helpers_translations()),
         msg = glue::glue(
             "!!! WARNING: ",
             "Number of variables to translate and translations do not match.",
@@ -159,7 +121,7 @@ translating_variables <- function(
 
     # Check that order of translate_variables and translations match
     targets::tar_assert_true(
-        all(translate_variables == names(translations)),
+        all(translate_variables == names(helpers_translations())),
         msg = glue::glue(
             "!!! WARNING: ",
             "Order of variables to translate and translations do not match.",
@@ -170,7 +132,7 @@ translating_variables <- function(
     # Apply translations
     for (i in 1:length(translate_variables)) {
         if (translate_variables[i] %in% names(housing_data)) {
-            names(housing_data)[names(housing_data) == translate_variables[i]] <- translations[translate_variables[i]]
+            names(housing_data)[names(housing_data) == translate_variables[i]] <- helpers_translations()[translate_variables[i]]
         } else {
             targets::tar_error(
                 msg = glue::glue(
