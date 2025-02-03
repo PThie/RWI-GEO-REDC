@@ -1,4 +1,4 @@
-testing_suf_compliance <- function(
+testing_SUF_compliance <- function(
     suf_data = NA,
     file_format = NA
 ) {
