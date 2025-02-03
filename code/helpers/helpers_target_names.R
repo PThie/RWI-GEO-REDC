@@ -11,7 +11,11 @@ helpers_target_names <- function() {
     # list of target names
 
     # NOTE: define outside list to be able to use in list
-    spatial_units_english = c("district", "municipality", "zip_code")
+    spatial_units_english <- c("district", "municipality", "zip_code")
+    
+    # needed for name exporting
+    # NOTE: plzs do not have a names
+    spatial_units_english_names <- spatial_units_english[1:2]
 
     target_names <- list(
         #--------------------------------------------------
@@ -24,6 +28,9 @@ helpers_target_names <- function() {
         # name for the target objects
         "spatial_data" = glue::glue(
             "spatial_data_{spatial_units_english}"
+        ),
+        "spatial_unit_names" = glue::glue(
+            "spatial_unit_names_{spatial_units_english_names}"
         )
     )
     
