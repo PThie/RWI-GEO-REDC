@@ -147,7 +147,7 @@ targets_reading <- rlang::list2(
     #--------------------------------------------------
     # housing data
     tar_file_read(
-        org_data,
+        housing_data_org,
         file.path(
             config_paths()[["data_path"]],
             "original",
@@ -217,7 +217,7 @@ targets_preparation <- rlang::list2(
     tar_fst(
         column_infos_benchmark,
         exporting_column_infos(
-            housing_data = org_data
+            housing_data = housing_data_org
         )
     ),
     # NOTE: if the pipeline stops due to inconsistent variables, make the appropriate
@@ -226,7 +226,7 @@ targets_preparation <- rlang::list2(
     tar_target(
         test_consistent_variables,
         testing_consistent_variables(
-            housing_data = org_data,
+            housing_data = housing_data_org,
             column_infos_benchmark = column_infos_benchmark
         )
     ),
@@ -236,7 +236,7 @@ targets_preparation <- rlang::list2(
         # generates warnings
         suppressWarnings(
             cleaning_org_data(
-                housing_data = org_data
+                housing_data = housing_data_org
             )
         )
     ),
