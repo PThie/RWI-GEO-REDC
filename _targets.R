@@ -422,15 +422,14 @@ targets_unit_testing <- rlang::list2(
         testing_temporal_trends(
             housing_data = housing_data_translated
         )
+    ),
+    tar_target(
+        summary_stats_delivery,
+        testing_summary_stats(
+            housing_data = housing_data_translated,
+            variable_labels = variable_labels
+        )
     )
-
-    # check that all variables have the right type
-
-    # check that all variables are in reasonable ranges
-    # compare to previous delivery
-
-    # check that municipality, district, state ID have the correct character
-    # lengths (8, 5, 2)
 )
 
 #--------------------------------------------------
