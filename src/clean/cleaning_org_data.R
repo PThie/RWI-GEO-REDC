@@ -1063,7 +1063,7 @@ cleaning_org_data <- function(
         names()
     
     int_cols <- c(
-        "obid", "anbieter", "duplicateid", "letzte_modernisierung",
+        "anbieter", "duplicateid", "letzte_modernisierung",
         "baujahr", "blid", "immobilientyp", "objektzustand", "ausstattung",
         "heizungsart", "energieausweistyp", "energieeffizienzklasse",
         "ejahr", "emonat", "ajahr", "amonat", "kategorie_business", 
@@ -1084,7 +1084,7 @@ cleaning_org_data <- function(
 
     # character columns
     char_cols <- c(
-        "freiab", "courtage", "plz",
+        "obid", "freiab", "courtage", "plz",
         "strasse", "hausnr", "redc_version", "redc_delivery", "etage"
     )
 
