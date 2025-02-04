@@ -81,6 +81,7 @@ testing_missing_variables <- function(
         file.path(
             config_paths()[["output_path"]],
             config_globals()[["current_version"]],
+            "info",
             "number_of_missings.xlsx"
         ),
         row.names = FALSE
@@ -102,7 +103,6 @@ testing_missing_variables <- function(
         if (!grepl("bef", var)) {
             housing_data[[var]] <- NULL
         
-
             cli::cli_alert_info(
                 cli::col_yellow(
                     glue::glue(
@@ -119,6 +119,7 @@ testing_missing_variables <- function(
         file.path(
             config_paths()[["output_path"]],
             config_globals()[["current_version"]],
+            "info",
             "variables_deleted_due_to_missings.txt"
         ),
         row.names = FALSE,

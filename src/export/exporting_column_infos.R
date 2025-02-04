@@ -49,6 +49,7 @@ exporting_column_infos <- function(
             file.path(
                 config_paths()[["output_path"]],
                 config_globals()[["current_version"]],
+                "info",
                 "column_types.csv"
             )
         )

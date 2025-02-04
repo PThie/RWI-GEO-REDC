@@ -683,6 +683,7 @@ cleaning_org_data <- function(
         file.path(
             config_paths()[["output_path"]],
             config_globals()[["current_version"]],
+            "info",
             "threshold_censoring.xlsx"
         ),
         rowNames = FALSE

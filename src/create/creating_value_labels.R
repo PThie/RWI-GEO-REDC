@@ -263,6 +263,7 @@ creating_value_labels <- function(
         file.path(
             config_paths()[["output_path"]],
             config_globals()[["current_version"]],
+            "info",
             "value_labels.xlsx"
         ),
         rowNames = FALSE

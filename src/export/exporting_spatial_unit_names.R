@@ -35,6 +35,7 @@ exporting_spatial_unit_names <- function(
         file.path(
             config_paths()[["output_path"]],
             config_globals()[["current_version"]],
+            "info",
             filename
         ),
         rowNames = FALSE

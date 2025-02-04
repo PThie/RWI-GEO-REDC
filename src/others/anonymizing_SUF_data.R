@@ -75,6 +75,7 @@ anonymizing_SUF_data <- function(
         file.path(
             config_paths()[["output_path"]],
             config_globals()[["current_version"]],
+            "info",
             "missings_grid_id.txt"
         ),
         rownames = FALSE,
