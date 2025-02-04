@@ -107,7 +107,7 @@ testing_summary_stats <- function(
             directory,
             append = TRUE,
             rownames = FALSE,
-            width = 10
+            width = 12
         )
 
         # store stats in list
