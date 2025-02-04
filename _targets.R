@@ -30,6 +30,9 @@ suppressPackageStartupMessages({
     library(data.table)
     library(stringr)
     library(arrow)
+    library(zoo)
+    library(ggplot2)
+    library(MetBrewer)
 })
 
 #--------------------------------------------------
@@ -412,6 +415,12 @@ targets_unit_testing <- rlang::list2(
             exported_file_formats = helpers_target_names()[["exported_file_formats"]],
             suf_compliance_test = rlang::syms(helpers_target_names()[["suf_compliance_test"]]),
             suf_anonymization_test = rlang::syms(helpers_target_names()[["suf_anonymization_test"]])
+        )
+    ),
+    tar_target(
+        temporal_trends_test,
+        testing_temporal_trends(
+            housing_data = housing_data_translated
         )
     )
 
