@@ -429,6 +429,13 @@ targets_unit_testing <- rlang::list2(
             housing_data = housing_data_translated,
             variable_labels = variable_labels
         )
+    ),
+    tar_target(
+        spatial_trends_test,
+        testing_spatial_trends(
+            housing_data = housing_data_translated,
+            districts = spatial_data_district
+        )
     )
 )
 
