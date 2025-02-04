@@ -113,6 +113,33 @@ creating_folder_structure <- function() {
     )
 
     #--------------------------------------------------
+    # create subfolders in output
+
+    for (output_folder in config_globals()[["output_folders"]]) {
+        ifelse(
+            !dir.exists(
+                file.path(
+                    config_paths()[["output_path"]],
+                    config_globals()[["current_version"]],
+                    output_folder
+                )
+            ),
+            yes = dir.create(
+                file.path(
+                    config_paths()[["output_path"]],
+                    config_globals()[["current_version"]],
+                    output_folder
+                )
+            ),
+            no = cli::cli_alert_success(
+                cli::col_green(
+                    "Output directory for \"{output_folder}\" output folder already exists."
+                )
+            )
+        )
+    }
+
+    #--------------------------------------------------
     # return
 
     return(NULL)
