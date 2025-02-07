@@ -163,7 +163,7 @@ creating_variable_labels <- function(
                     variable == "listing_price" ~ "Listing price (EUR)",
                     variable == "lon_gps" ~ "Geographical coordinate longitude GPS",
                     variable == "lon_utm" ~ "Geographical coordinate longitude UTM",
-                    variable == "obid" ~ "Object ID",
+                    variable == "obid" ~ "Property unit identifier",
                     variable == "parking" ~ "Indicator for parking",
                     variable == "plot_area" ~ "Plot area (sq. meter)",
                     variable == "property_condition" ~ "Classification of property condition",
