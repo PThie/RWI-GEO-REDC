@@ -32,6 +32,9 @@ anonymizing_SUF_data <- function(
         merged_data$ergg_1km < 0
     ))
 
+    # calculate the unique number of grids
+    num_grids <- length(unique(merged_data$ergg_1km[merged_data$ergg_1km >= 0]))
+
     # censore grid ID
     merged_data <- merged_data |>
         dplyr::mutate(
@@ -54,6 +57,7 @@ anonymizing_SUF_data <- function(
     # report number of missings before and after censoring
     missings <- as.data.frame(rbind(
         total_NOBS = nrow(merged_data),
+        total_NOBS_unique_grids = num_grids,
         missing_before_censoring = num_missing_before,
         missing_before_censoring_perc = (num_missing_before / nrow(merged_data)) * 100,
         missing_after_censoring = num_missing_after,
