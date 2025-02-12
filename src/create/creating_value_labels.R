@@ -162,7 +162,7 @@ creating_value_labels <- function(
                 variable == "dupID_gen" & value == 6 ~ "Differences in set 1 variables (below thresholds) and time difference is greater 6 months",
                 variable == "dupID_gen" & value == 7 ~ "Differences in set 1 and 2 variables (below thresholds) and time difference is smaller/ equal 6 months",
                 variable == "dupID_gen" & value == 8 ~ "Differences in set 1 and 2 variables (below thresholds) and time difference is greater 6 months",
-                variable == "dupID_gen" & value == 9 ~ "Differences in set 1 and 2 variables (above thresholds)",
+                variable == "dupID_gen" & value == 9 ~ "Differences exceeding thresholds. Time difference irrelevant",
                 #--------------------------------------------------
                 variable == "elevator" & value == 0 ~ "No",
                 variable == "elevator" & value == 1 ~ "Yes",
