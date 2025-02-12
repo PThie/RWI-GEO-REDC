@@ -2,7 +2,7 @@
 
 This repository shows the detailed preparation and generation of the RWI-GEO-REDC dataset.
 
-## Abstract Data Description (v1)
+## Abstract Data Description (V1)
 
 The FDZ Ruhr provides a dataset on commercial real estate advertisements in Germany, drawing from information obtained from the internet platform ImmoScout24. The dataset encompasses a wide range of real estate types, including but not limited to offices, retail, and hotels. It is important to note that the data are available for scientific research purposes only. The provided dataset offers detailed regional information and a comprehensive set of characteristics. This data report offers a concise overview of the data, its limitations, and specific details. The data report is intended for (potential) users of the data as support for their data preparation. 
 
@@ -21,8 +21,8 @@ Data users shall cite the datasets properly with the respective DOIs. The DOIs o
 **On-site dataset:** [http://doi.org/10.7807/immo:redc:v1](http://doi.org/10.7807/immo:redc:v1)
 
 ## More Information
-<!-- Adjust once known -->
-<!-- - [General information on RWI-GEO-RED/X](https://www.rwi-essen.de/en/research-advice/further/research-data-center-ruhr-fdz/data-sets/rwi-geo-red/x-real-estate-data-and-price-indices) -->
+
+- [General information on RWI-GEO-RED/C/X](https://www.rwi-essen.de/en/research-advice/further/research-data-center-ruhr-fdz/data-sets/rwi-geo-red/x-real-estate-data-and-price-indices)
 - [Data report RWI-GEO-REDC V1](https://www.rwi-essen.de/fileadmin/user_upload/RWI/FDZ/Datenbeschreibung-REDC-v1.pdf). Please cite the data report as: Thiel (2025), FDZ Data Description: Commercial Real-Estate Data for Germany (RWI-GEO-REDC V1) - Commercial advertisements on the Internet Platform ImmoScout24 01/2023-06/2023, RWI Projektberichte, Essen.
 
 ## DOI
