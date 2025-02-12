@@ -23,7 +23,11 @@ creating_value_labels <- function(
         )
 
     # extract variable names
-    var_names <- sort(names(categorical_data))
+    # TODO: this is only a hot fix. bef should be a categorical variable in the
+    # data
+    # TODO: if you pull bef from names of data, keep in mind that there are multiple
+    # bef variables and you only need one (and drop the indexing)
+    var_names <- sort(c("bef", names(categorical_data)))
 
     #--------------------------------------------------
     # create vector of variable names (according to length of unique values)
@@ -81,6 +85,34 @@ creating_value_labels <- function(
                 #--------------------------------------------------
                 variable == "basement" & value == 0 ~ "No",
                 variable == "basement" & value == 1 ~ "Yes",
+                #--------------------------------------------------
+                variable == "bef" & value == 1 ~ "No information",
+                variable == "bef" & value == 2 ~ "Geothermal",
+                variable == "bef" & value == 3 ~ "Solar heating",
+                variable == "bef" & value == 4 ~ "Pellet heating",
+                variable == "bef" & value == 5 ~ "Gas heating",
+                variable == "bef" & value == 6 ~ "Oil heating",
+                variable == "bef" & value == 7 ~ "District heating",
+                variable == "bef" & value == 8 ~ "Electricity",
+                variable == "bef" & value == 9 ~ "Coal",
+                variable == "bef" & value == 10 ~ "Natural gas light",
+                variable == "bef" & value == 11 ~ "Natural gas heavy",
+                variable == "bef" & value == 12 ~ "Liquid gas",
+                variable == "bef" & value == 13 ~ "Steam district heating",
+                variable == "bef" & value == 14 ~ "Wood",
+                variable == "bef" & value == 15 ~ "Wood chips",
+                variable == "bef" & value == 16 ~ "Coal coke",
+                variable == "bef" & value == 17 ~ "Local heating",
+                variable == "bef" & value == 18 ~ "No attribute assigned",
+                variable == "bef" & value == 19 ~ "Heat supply",
+                variable == "bef" & value == 20 ~ "Bio energy",
+                variable == "bef" & value == 21 ~ "Wind energy",
+                variable == "bef" & value == 22 ~ "Hydro energy",
+                variable == "bef" & value == 23 ~ "Environmental thermal energy",
+                variable == "bef" & value == 24 ~ "Combined heat and power fossil fuels",
+                variable == "bef" & value == 25 ~ "Combined heat and power renewable energy",
+                variable == "bef" & value == 26 ~ "Combined heat and power regenerative energy",
+                variable == "bef" & value == 27 ~ "Combined heat and power bio energy",
                 #--------------------------------------------------
                 variable == "blid" & value == 1 ~ "Schleswig Holstein",
                 variable == "blid" & value == 2 ~ "Hamburg",

@@ -75,11 +75,15 @@ helpers_unique_categories <- function() {
             "type" = "categorical"
         ),
         "wheelchair_accessible" = list(
-            "unique_values"= 2,
+            "unique_values" = 2,
             "type" = "dummy"
         ),
         "redc_delivery" = list(
             "unique_values" = length(config_globals()[["deliveries"]]),
+            "type" = "categorical"
+        ),
+        "bef" = list(
+            "unique_values" = 27,
             "type" = "categorical"
         )
     )
