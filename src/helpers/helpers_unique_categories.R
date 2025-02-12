@@ -27,7 +27,7 @@ helpers_unique_categories <- function() {
             "type" = "categorical"
         ),
         "dupID_gen" = list(
-            "unique_values" = 9,
+            "unique_values" = 10,
             "type" = "categorical"
         ),
         "elevator" = list(
