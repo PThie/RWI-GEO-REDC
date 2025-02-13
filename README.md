@@ -26,8 +26,8 @@ Data users shall cite the datasets properly with the respective DOIs. The DOIs o
 - [Data report RWI-GEO-REDC V1](https://www.rwi-essen.de/fileadmin/user_upload/RWI/FDZ/Datenbeschreibung-REDC-v1.pdf). Please cite the data report as: Thiel (2025), FDZ Data Description: Commercial Real-Estate Data for Germany (RWI-GEO-REDC V1) - Commercial advertisements on the Internet Platform ImmoScout24 01/2023-06/2023, RWI Projektberichte, Essen.
 
 ## DOI
-<!-- Adjust once known -->
-<!-- - Repository for V1.0: [![DOI:10.5281/zenodo.14167835](http://img.shields.io/badge/DOI-10.5281/zenodo.14167835-048BC0.svg)](https://zenodo.org/account/settings/github/repository/PThie/RWI-GEO-REDX) -->
+
+- Repository for V1.0: [![DOI:10.5281/zenodo.14863497](http://img.shields.io/badge/DOI-10.5281/zenodo.14863497-048BC0.svg)](https://zenodo.org/account/settings/github/repository/PThie/RWI-GEO-REDC)
 - RWI-GEO-REDC V1 (SUF): [http://doi.org/10.7807/immo:redc:suf:v1](http://doi.org/10.7807/immo:redc:suf:v1)
 - RWI-GEO-REDC V1 (On-site): [http://doi.org/10.7807/immo:redc:v1](http://doi.org/10.7807/immo:redc:v1)
 
