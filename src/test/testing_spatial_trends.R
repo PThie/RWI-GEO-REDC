@@ -66,13 +66,22 @@ testing_spatial_trends <- function(
         variable_of_interest = NA,
         legend_name = NA,
         breaks_steps = NA,
-        file_name = NA
+        file_name = NA,
+        german = FALSE
     ) {
         map <- ggplot()+
             geom_sf(
                 data = housing_data,
                 mapping = aes(fill = .data[[variable_of_interest]])
             )+
+            theme_void()+
+            theme(
+                legend.text = element_text(size = 12),
+                legend.title = element_text(size = 13)
+            )
+
+        if (german == TRUE) {
+            map <- map+
             scale_fill_viridis_c(
                 option = "magma",
                 direction = -1,
@@ -86,14 +95,27 @@ testing_spatial_trends <- function(
                     max(housing_data[[variable_of_interest]], na.rm = TRUE)
                 ),
                 na.value = "gray90",
-                name = legend_name,
-                labels = scales::comma
-            )+
-            theme_void()+
-            theme(
-                legend.text = element_text(size = 12),
-                legend.title = element_text(size = 13)
+                name = legend_name
             )
+        } else {
+            map <- map+
+                scale_fill_viridis_c(
+                    option = "magma",
+                    direction = -1,
+                    breaks = seq(
+                        0,
+                        max(housing_data[[variable_of_interest]], na.rm = TRUE),
+                        by = breaks_steps
+                    ),
+                    limits = c(
+                        0,
+                        max(housing_data[[variable_of_interest]], na.rm = TRUE)
+                    ),
+                    na.value = "gray90",
+                    name = legend_name,
+                    labels = scales::comma
+                )
+        }
 
         ggsave(
             plot = map,
@@ -111,9 +133,18 @@ testing_spatial_trends <- function(
         plotting_map(
             housing_data = housing_data_prices_sf,
             variable_of_interest = "listing_price_sqm",
-            legend_name = "Listing price per sqm. (EUR)",
+            legend_name = "Avg. price per sqm. (EUR)",
             breaks_steps = 2000,
             file_name = paste0("listing_price_sqm_", year)
+        )
+
+        plotting_map(
+            housing_data = housing_data_prices_sf,
+            variable_of_interest = "listing_price_sqm",
+            legend_name = "Durchschn. Preis pro qm. (EUR)",
+            breaks_steps = 2000,
+            file_name = paste0("german_listing_price_sqm_", year),
+            german = TRUE
         )
         
         plotting_map(
