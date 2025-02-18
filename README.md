@@ -23,7 +23,7 @@ Data users shall cite the datasets properly with the respective DOIs. The DOIs o
 ## More Information
 
 - [General information on RWI-GEO-RED/C/X](https://www.rwi-essen.de/en/research-advice/further/research-data-center-ruhr-fdz/data-sets/rwi-geo-red/x-real-estate-data-and-price-indices)
-- [Data report RWI-GEO-REDC V1](https://www.rwi-essen.de/fileadmin/user_upload/RWI/FDZ/Datenbeschreibung-REDC-v1.pdf). Please cite the data report as: Thiel (2025), FDZ Data Description: Commercial Real-Estate Data for Germany (RWI-GEO-REDC V1) - Commercial advertisements on the Internet Platform ImmoScout24 01/2023-06/2023, RWI Projektberichte, Essen.
+- [Data report RWI-GEO-REDC V1](https://www.rwi-essen.de/fileadmin/user_upload/RWI/FDZ/FDZ_Datensatzbeschreibung_REDC_v1.pdf). Please cite the data report as: Thiel (2025), FDZ Data Description: Commercial Real-Estate Data for Germany (RWI-GEO-REDC V1) - Commercial advertisements on the Internet Platform ImmoScout24 01/2023-06/2023, RWI Projektberichte, Essen.
 
 ## DOI
 
