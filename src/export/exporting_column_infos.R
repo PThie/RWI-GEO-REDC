@@ -43,28 +43,31 @@ exporting_column_infos <- function(
 
         #--------------------------------------------------
         # export
+        # NOTE: version is hard coded because the version in globals changes
 
         data.table::fwrite(
             coltypes,
             file.path(
                 config_paths()[["output_path"]],
-                config_globals()[["current_version"]],
+                "v1",
+                "info",
+                "column_types.csv"
+            )
+        )
+    } else {
+        #--------------------------------------------------
+        # re-read column types and names of the first delivery
+        # NOTE: version is hard coded because the version in globals changes
+        
+        coltypes <- data.table::fread(
+            file.path(
+                config_paths()[["output_path"]],
+                "v1",
                 "info",
                 "column_types.csv"
             )
         )
     }
-
-    #--------------------------------------------------
-    # re-read column types and names of the first delivery
-
-    coltypes <- data.table::fread(
-        file.path(
-            config_paths()[["output_path"]],
-            config_globals()[["current_version"]],
-            "column_types.csv"
-        )
-    )
 
     #--------------------------------------------------
     # return
