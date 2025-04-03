@@ -33,32 +33,13 @@ suppressPackageStartupMessages({
     library(zoo)
     library(ggplot2)
     library(MetBrewer)
+    library(autometric)
 })
 
 #--------------------------------------------------
 # working directory
 
 setwd(here())
-
-#--------------------------------------------------
-# Pipeline settings
-
-# target options
-tar_option_set(
-    resources = tar_resources(
-        fst = tar_resources_fst(compress = 50)
-    ),
-    seed = 1,
-    garbage_collection = TRUE,
-    memory = "transient",
-    controller = crew_controller_local(
-        name = "my_controller",
-        workers = 3,
-        seconds_idle = 10
-    ),
-    retrieval = "worker",
-    storage = "worker"
-)
 
 #--------------------------------------------------
 # load configurations
@@ -72,6 +53,36 @@ source(
         "helpers",
         "config.R"
     )
+)
+
+#--------------------------------------------------
+# Pipeline settings
+
+# target options
+controller <- crew_controller_local(
+    name = "worker",
+    workers = 3,
+    seconds_idle = 10,
+    options_metrics = crew_options_metrics(
+        path = file.path(
+            config_paths()[["logs_path"]],
+            "worker_metrics",
+            "worker_metrics_history"
+        ),
+        seconds_interval = 1
+    )
+)
+
+tar_option_set(
+    resources = tar_resources(
+        fst = tar_resources_fst(compress = 50)
+    ),
+    seed = 1,
+    garbage_collection = TRUE,
+    memory = "transient",
+    controller = controller,
+    retrieval = "worker",
+    storage = "worker"
 )
 
 #--------------------------------------------------
@@ -443,11 +454,14 @@ targets_unit_testing <- rlang::list2(
 # pipeline stats
 
 targets_pipeline_stats <- rlang::list2(
-    # NOTE: targets type has to be tar_file in order to use tar_progress_summary
-    # and tar_crew within the pipeline
-    tar_file(
-        pipeline_stats,
-        helpers_monitoring_pipeline(),
+	tar_file(
+		pipeline_stats,
+		helpers_monitoring_pipeline(),
+		cue = tar_cue(mode = "always")
+	),
+    tar_target(
+        worker_stats,
+        reading_worker_stats(),
         cue = tar_cue(mode = "always")
     )
 )
@@ -457,14 +471,14 @@ targets_pipeline_stats <- rlang::list2(
 
 rlang::list2(
     targets_preparation_folders,
-    targets_files,
-    targets_reading,
-    targets_preparation,
-    targets_append,
-    targets_combine_cleaning,
-    targets_suf_cleaning,
-    targets_documentation,
-    targets_export,
-    targets_unit_testing,
+    # targets_files,
+    # targets_reading,
+    # targets_preparation,
+    # targets_append,
+    # targets_combine_cleaning,
+    # targets_suf_cleaning,
+    # targets_documentation,
+    # targets_export,
+    # targets_unit_testing,
     targets_pipeline_stats
 )
