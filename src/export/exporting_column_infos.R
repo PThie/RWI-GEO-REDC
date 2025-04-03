@@ -20,26 +20,9 @@ exporting_column_infos <- function(
         #--------------------------------------------------
         # extract column types and names
 
-        coltypes <- sapply(housing_data, class) |>
-            unlist() |>
-            as.data.frame() |>
-            dplyr::rename(columns_types = 1)
-
-        coltypes$columns <- rownames(coltypes)
-        rownames(coltypes) <- NULL
-
-        coltypes <- coltypes |>
-            dplyr::relocate(columns) |>
-            # handle that Einstelldatum has two types
-            dplyr::filter(
-                columns != "Einstelldatum2"
-            ) |>
-            dplyr::mutate(
-                columns = dplyr::case_when(
-                    columns == "Einstelldatum1" ~ "Einstelldatum",
-                    TRUE ~ columns
-                )
-            )
+        coltypes <- helpers_extracting_column_info(
+            housing_data = housing_data
+        )
 
         #--------------------------------------------------
         # export

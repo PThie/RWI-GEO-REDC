@@ -19,25 +19,9 @@ testing_consistent_variables <- function(
     #--------------------------------------------------
     # get column names and types of current delivery
 
-    coltypes <- sapply(housing_data, class) |>
-        unlist() |>
-        as.data.frame() |>
-        dplyr::rename(columns_types_current = 1)
-
-    coltypes$columns <- rownames(coltypes)
-    rownames(coltypes) <- NULL
-
-    coltypes <- coltypes |>
-        dplyr::relocate(columns) |>
-        dplyr::filter(
-            columns != "Einstelldatum2"
-        ) |>
-        dplyr::mutate(
-            columns = dplyr::case_when(
-                columns == "Einstelldatum1" ~ "Einstelldatum",
-                TRUE ~ columns
-            )
-        )
+    coltypes <- helpers_extracting_column_info(
+        housing_data = housing_data
+    )
     
     #----------------------------------------------
     # test for differences
