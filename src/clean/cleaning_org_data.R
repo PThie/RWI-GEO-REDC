@@ -33,22 +33,6 @@ cleaning_org_data <- function(
             ejahr = as.numeric(substring(zeitraum, first = 12, last = 15)),
             emonat = as.integer(substring(zeitraum, first = 16, last = 17)),
             #--------------------------------------------------
-            # delivery 2312 has two variables referencing the energy class
-            # merge both
-            energieeffizienzklasse = dplyr::case_when(
-                energieeffizienzklasse == "" ~ NA_character_,
-                TRUE ~ energieeffizienzklasse
-            ),
-            # energieeffizienz_klasse = dplyr::case_when(
-            #     energieeffizienz_klasse == "" ~ NA_character_,
-            #     TRUE ~ energieeffizienz_klasse
-            # ),
-            # energieeffizienzklasse := data.table::fcoalesce(
-            #     energieeffizienzklasse,
-            #     energieeffizienz_klasse
-            # ),
-            # energieeffizienz_klasse = NULL,
-            #--------------------------------------------------
             # fix housing type (remove Umlaute)
             immobilientyp = stringi::stri_trans_general(
                 immobilientyp,
@@ -182,6 +166,58 @@ cleaning_org_data <- function(
     }
 
     #--------------------------------------------------
+    # clean energy efficiency class
+    # NOTE: delivery 2312 has two variables referencing the energy class
+    # merge both
+
+    if (config_globals()[["current_delivery"]] == "Lieferung_2306") {
+        housing_data_prep <- housing_data_prep |>
+            dplyr::mutate(
+                energieeffizienzklasse = dplyr::case_when(
+                    energieeffizienzklasse == "" ~ NA_character_,
+                    TRUE ~ energieeffizienzklasse
+                )
+            )
+    } else {
+        # check that both types of varibles are not non-missing at the same time
+        # otherwise, the following procedure would overwrite one value (as it
+        # takes first value from energieeffizienzklasse and then energieeffizienz_klasse)
+        non_missings <- length(
+            which(
+                !is.na(housing_data_prep$energieeffizienzklasse) &
+                !is.na(housing_data_prep$energieeffizienz_klasse)
+            )
+        )
+
+        targets::tar_assert_true(
+            non_missings == 0,
+            msg = glue::glue(
+                "!!! WARNING:
+                Variable energieeffizienzklasse and energieeffizienz_klasse are both non-missing.",
+                "(Error code: cod#3)"
+            )
+        )
+
+        # combine both variables into one
+        housing_data_prep <- housing_data_prep |>
+            dplyr::mutate(
+                energieeffizienzklasse = dplyr::case_when(
+                    energieeffizienzklasse == "" ~ NA_character_,
+                    TRUE ~ energieeffizienzklasse
+                ),
+                energieeffizienz_klasse = dplyr::case_when(
+                    energieeffizienz_klasse == "" ~ NA_character_,
+                    TRUE ~ energieeffizienz_klasse
+                ),
+                energieeffizienzklasse := data.table::fcoalesce(
+                    energieeffizienzklasse,
+                    energieeffizienz_klasse
+                ),
+                energieeffizienz_klasse = NULL
+            )
+    }
+
+    #--------------------------------------------------
     # rename columns "bef" (befeuerungsarten)
 
     # get the max amount of potential splits based on delimiter "|"
@@ -244,7 +280,7 @@ cleaning_org_data <- function(
                 msg = glue::glue(
                     "!!! WARNING:
                     Variable {var} has more than one value.",
-                    "(Error code: cod#3)"
+                    "(Error code: cod#4)"
                 )
             )
         }
@@ -288,7 +324,7 @@ cleaning_org_data <- function(
             msg = glue::glue(
                 "!!! WARNING:
                 Variable {col} has values that are not considered in the recoding.",
-                "(Error code: cod#4)"
+                "(Error code: cod#5)"
             )
         )
     }
@@ -482,7 +518,7 @@ cleaning_org_data <- function(
                 "!!! WARNING: ",
                 "Variable {var} contains unexpected values. ",
                 "Please check the data and recode if necessary.",
-                "(Error code: cod#5)"
+                "(Error code: cod#6)"
             )
         )
     }
@@ -728,7 +764,7 @@ cleaning_org_data <- function(
             "!!! WARNING:
             Variable plz contains unexpected values. ",
             "Please check the data and recode if necessary.",
-            "(Error code: cod#6)"
+            "(Error code: cod#7)"
         )
     )
     
@@ -1076,7 +1112,7 @@ cleaning_org_data <- function(
             "!!! Warning: ",
             "Security deposit months and security deposit price do not have the same",
             "length in zero values. By definition it should be identical.",
-            "(Error code: cod#7)"
+            "(Error code: cod#8)"
         )
     )
 
@@ -1129,7 +1165,7 @@ cleaning_org_data <- function(
             msg = glue::glue(
                 "!!! WARNING: ",
                 "Variable {var} not covered in the type setting. ",
-                "(Error code: cod#8)"
+                "(Error code: cod#9)"
             )
         )
     }
@@ -1142,7 +1178,7 @@ cleaning_org_data <- function(
             msg = glue::glue(
                 "!!! WARNING: ",
                 "Variable {var} is specified to be deleted but is covered in the type setting. ",
-                "(Error code: cod#9)"
+                "(Error code: cod#10)"
             )
         )
     }
