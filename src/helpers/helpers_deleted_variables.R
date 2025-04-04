@@ -27,7 +27,6 @@ helpers_deleted_variables <- function() {
         "wohngeld",
         "mietewarm",
         "kaufvermietet",
-        "heizkosten",
         "anzahletagen",
         "is24_stadt_kreis", # dropped in RED as well
         "kreis",

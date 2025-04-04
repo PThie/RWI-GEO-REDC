@@ -579,7 +579,8 @@ cleaning_org_data <- function(
         "mietekalt",
         "nebenkosten",
         "teilbar_ab",
-        "nebenkosten"
+        "nebenkosten",
+        "heizkosten"
     )
 
     # calculate thresholds
@@ -1097,7 +1098,8 @@ cleaning_org_data <- function(
         "kaufpreis", "mietekalt", "nebenkosten", "geox", "geoy", "miete_proqm",                                 
         "teilbar_ab", "nebenkosten_proqm", "ev_kennwert",
         "hits", "click_schnellkontakte", "liste_show", "liste_match",
-        "click_weitersagen", "click_url", "mietekaution_months", "mietekaution_price"
+        "click_weitersagen", "click_url", "mietekaution_months", "mietekaution_price",
+        "heizkosten"
     )
 
     # character columns
