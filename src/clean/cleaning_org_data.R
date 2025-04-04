@@ -157,6 +157,23 @@ cleaning_org_data <- function(
     )
 
     #--------------------------------------------------
+    # check that heizkosten_in_wm_enthalten is correctly recoded
+    # NOTE: check on orginal data set (i.e. before recoding)
+
+    targets::tar_assert_true(
+        all(
+            unique(housing_data$heizkosten_in_wm_enthalten) %in% c(
+                "null", "true", "false"
+            )
+        ),
+        msg = glue::glue(
+            "!!! WARNING:
+            Variable heizkosten_in_wm_enthalten has more categories than defined in recoding.",
+            "(Error code: cod#2)"
+        )
+    )
+
+    #--------------------------------------------------
     # rename columns "bef" (befeuerungsarten)
 
     # get the max amount of potential splits based on delimiter "|"
@@ -219,7 +236,7 @@ cleaning_org_data <- function(
                 msg = glue::glue(
                     "!!! WARNING:
                     Variable {var} has more than one value.",
-                    "(Error code: cod#2)"
+                    "(Error code: cod#3)"
                 )
             )
         }
@@ -263,7 +280,7 @@ cleaning_org_data <- function(
             msg = glue::glue(
                 "!!! WARNING:
                 Variable {col} has values that are not considered in the recoding.",
-                "(Error code: cod#3)"
+                "(Error code: cod#4)"
             )
         )
     }
@@ -457,7 +474,7 @@ cleaning_org_data <- function(
                 "!!! WARNING: ",
                 "Variable {var} contains unexpected values. ",
                 "Please check the data and recode if necessary.",
-                "(Error code: cod#4)"
+                "(Error code: cod#5)"
             )
         )
     }
@@ -702,7 +719,7 @@ cleaning_org_data <- function(
             "!!! WARNING:
             Variable plz contains unexpected values. ",
             "Please check the data and recode if necessary.",
-            "(Error code: cod#5)"
+            "(Error code: cod#6)"
         )
     )
     
@@ -1050,7 +1067,7 @@ cleaning_org_data <- function(
             "!!! Warning: ",
             "Security deposit months and security deposit price do not have the same",
             "length in zero values. By definition it should be identical.",
-            "(Error code: cod#6)"
+            "(Error code: cod#7)"
         )
     )
 
@@ -1102,7 +1119,7 @@ cleaning_org_data <- function(
             msg = glue::glue(
                 "!!! WARNING: ",
                 "Variable {var} not covered in the type setting. ",
-                "(Error code: cod#7)"
+                "(Error code: cod#8)"
             )
         )
     }
@@ -1115,7 +1132,7 @@ cleaning_org_data <- function(
             msg = glue::glue(
                 "!!! WARNING: ",
                 "Variable {var} is specified to be deleted but is covered in the type setting. ",
-                "(Error code: cod#8)"
+                "(Error code: cod#9)"
             )
         )
     }
