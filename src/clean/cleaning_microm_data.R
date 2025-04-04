@@ -72,24 +72,26 @@ cleaning_microm_data <- function(
     #--------------------------------------------------
     # duplicate data for end periods
 
-    # determine years for duplication
-    end_years <- seq(
-        config_globals()[["microm_max_year"]] + 1,
-        config_globals()[["max_year"]],
-        by = 1
-    )
+    if (config_globals()[["max_year"]] > config_globals()[["microm_max_year"]]) {
+        # determine years for duplication
+        end_years <- seq(
+            config_globals()[["microm_max_year"]] + 1,
+            config_globals()[["max_year"]],
+            by = 1
+        )
 
-    # duplicate data
-    end_years_data_list <- list()
-    for (year in end_years) {
-        end_years_data_list[[year]] <- avg_microm_end |>
-            dplyr::mutate(
-                year = year
-            )
+        # duplicate data
+        end_years_data_list <- list()
+        for (year in end_years) {
+            end_years_data_list[[year]] <- avg_microm_end |>
+                dplyr::mutate(
+                    year = year
+                )
+        }
+
+        # combine all
+        end_years_data <- data.table::rbindlist(end_years_data_list)
     }
-
-    # combine all
-    end_years_data <- data.table::rbindlist(end_years_data_list)
 
     #--------------------------------------------------
     # merge all datasets
