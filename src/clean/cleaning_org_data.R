@@ -174,6 +174,13 @@ cleaning_org_data <- function(
     )
 
     #--------------------------------------------------
+    # transform type of cold rent (mietekalt) if not numeric
+
+    if (typeof(housing_data_prep$mietekalt) == "character") {
+        housing_data_prep$mietekalt <- as.numeric(housing_data_prep$mietekalt)
+    }
+
+    #--------------------------------------------------
     # rename columns "bef" (befeuerungsarten)
 
     # get the max amount of potential splits based on delimiter "|"
