@@ -68,6 +68,7 @@ cleaning_org_data <- function(
             ),
             # redefine anbieter
             anbieter = dplyr::case_when(
+                anbietertyp == "" ~ helpers_missing_values()[["not_specified"]],
                 anbietertyp == "Privatanbieter" ~ 1,
                 anbietertyp == "Makler" ~ 2,
                 anbietertyp == "Wohnungswirtschaft" ~ 3,
@@ -148,7 +149,7 @@ cleaning_org_data <- function(
     # than defined in recoding
 
     targets::tar_assert_true(
-        length(unique(housing_data_prep$anbieter)) == 9,
+        length(unique(housing_data$anbietertyp)) == 10,
         msg = glue::glue(
             "!!! WARNING:
             Variable anbieter has more categories than defined in recoding.",
