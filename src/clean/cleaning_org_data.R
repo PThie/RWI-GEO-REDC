@@ -179,6 +179,19 @@ cleaning_org_data <- function(
                 )
             )
     } else {
+        # set proper missings
+        housing_data_prep <- housing_data_prep |>
+            dplyr::mutate(
+                energieeffizienzklasse = dplyr::case_when(
+                    energieeffizienzklasse == "" ~ NA_character_,
+                    TRUE ~ energieeffizienzklasse
+                ),
+                energieeffizienz_klasse = dplyr::case_when(
+                    energieeffizienz_klasse == "" ~ NA_character_,
+                    TRUE ~ energieeffizienz_klasse
+                )
+            )
+        
         # check that both types of varibles are not non-missing at the same time
         # otherwise, the following procedure would overwrite one value (as it
         # takes first value from energieeffizienzklasse and then energieeffizienz_klasse)
@@ -201,14 +214,6 @@ cleaning_org_data <- function(
         # combine both variables into one
         housing_data_prep <- housing_data_prep |>
             dplyr::mutate(
-                energieeffizienzklasse = dplyr::case_when(
-                    energieeffizienzklasse == "" ~ NA_character_,
-                    TRUE ~ energieeffizienzklasse
-                ),
-                energieeffizienz_klasse = dplyr::case_when(
-                    energieeffizienz_klasse == "" ~ NA_character_,
-                    TRUE ~ energieeffizienz_klasse
-                ),
                 energieeffizienzklasse := data.table::fcoalesce(
                     energieeffizienzklasse,
                     energieeffizienz_klasse
@@ -273,9 +278,9 @@ cleaning_org_data <- function(
             "ort"
         )) {
             targets::tar_assert_true(
-                # length(unique(housing_data_prep[[var]])) == 1,
                 all(unique(housing_data_prep[[var]]) %in% c(
-                    NA, "nicht mehr existent"
+                    NA, "nicht mehr existent", -1,
+                    "", "null"
                 )),
                 msg = glue::glue(
                     "!!! WARNING:
@@ -341,6 +346,20 @@ cleaning_org_data <- function(
                     .x %in% helpers_missing_values()[["not_specified_variants"]] ~ helpers_missing_values()[["not_specified"]],
                     TRUE ~ helpers_missing_values()[["other"]]
                 )
+            )
+        )
+
+    #--------------------------------------------------
+    # fix zip-codes
+    # for a few observations there is a "D-" in front of the zip code
+    # e.g. "D-58095"
+
+    housing_data_prep <- housing_data_prep |>
+        dplyr::mutate(
+            plz = dplyr::case_when(
+                stringr::str_detect(plz, "D-") ~ stringr::str_replace_all(plz, "D-", ""),
+                stringr::str_detect(plz, "D ") ~ stringr::str_replace_all(plz, "D ", ""),
+                TRUE ~ plz
             )
         )
 
@@ -512,13 +531,19 @@ cleaning_org_data <- function(
         #--------------------------------------------------
         # actual check
 
+        # NOTE: the missing values are transformed to our missings in the process
+        # above, but are still included in the raw data used for this check
+        unique_values <- unique(dta[[var]])[
+            !unique(dta[[var]]) %in% c("")
+        ]
+
         targets::tar_assert_true(
-            length(unique(dta[[var]])) == expected_unique_values,
+            length(unique_values) == expected_unique_values,
             msg = glue::glue(
                 "!!! WARNING: ",
                 "Variable {var} contains unexpected values. ",
                 "Please check the data and recode if necessary.",
-                "(Error code: cod#6)"
+                " (Error code: cod#6)"
             )
         )
     }
@@ -623,7 +648,6 @@ cleaning_org_data <- function(
         "mietekalt",
         "nebenkosten",
         "teilbar_ab",
-        "nebenkosten",
         "heizkosten"
     )
 
@@ -683,7 +707,7 @@ cleaning_org_data <- function(
             ),
             plz = dplyr::case_when(
                 # censor if zip code is not complete
-                nchar(plz) == 4 ~ as.character(
+                nchar(plz) <= 4 ~ as.character(
                     helpers_missing_values()[["implausible"]]
                 ),
                 TRUE ~ plz
@@ -759,7 +783,10 @@ cleaning_org_data <- function(
     # NOTE: check based on raw data since the recoding is already applied for
     # prepared data
     targets::tar_assert_true(
-        length(unique(nchar(housing_data$plz))) == 3,
+        all(
+            # NOTE: 2 = missings, 5 = regular zip code
+            unique(nchar(housing_data_prep$plz)) %in% c(2, 5)
+        ),
         msg = glue::glue(
             "!!! WARNING:
             Variable plz contains unexpected values. ",
@@ -778,13 +805,6 @@ cleaning_org_data <- function(
             kaufpreis = dplyr::case_when(
                 mietekalt == kaufpreis ~ helpers_missing_values()[["other"]],
                 TRUE ~ kaufpreis
-            ),
-            # fix zip code
-            # for a few observations there is a "D-" in front of the zip code
-            # e.g. "D-58095"
-            plz = dplyr::case_when(
-                stringr::str_detect(plz, "D-") ~ stringr::str_replace_all(plz, "D-", ""),
-                TRUE ~ plz
             ),
             # remove Umlaute
             dplyr::across(
