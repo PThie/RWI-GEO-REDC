@@ -34,6 +34,7 @@ helpers_translations <- function() {
         "parkplatz" = "parking",
         "rollstuhlgerecht" = "wheelchair_accessible",
         "heizungsart" = "heating_type",
+        "heizkosten" = "heating_costs",
         "energieausweistyp" = "energy_certificate_type",
         "ev_kennwert" = "energy_consumption_index",
         "energieeffizienzklasse" = "energy_efficiency_class",
