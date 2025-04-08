@@ -1,17 +1,17 @@
 cleaning_append_data <- function(
     housing_data = NA
 ) {
-    #' @title
+    #' @title Cleaning appended data
     #' 
-    #' @description
+    #' @description This function cleans the appended data, i.e. the data with
+    #' all the waves combined together.
+    #' It mainly generates a unique ID for each listing and a dupID for each listing
+    #' that is duplicated.
     #' 
-    #' @param housing_data
+    #' @param housing_data Data frame with the appended data.
     #' 
-    #' @return
+    #' @return Data frame with the cleaned data.
     #' @author Patrick Thiel
-    #' 
-    #' @note on performance variables: They have only missing values. So apparently
-    #' they are not reported for commercial listings.
 
     #--------------------------------------------------
     # drop complete duplicates
