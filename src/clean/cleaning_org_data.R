@@ -21,8 +21,7 @@ cleaning_org_data <- function(
     housing_data_prep <- housing_data |>
         dplyr::mutate(
             #--------------------------------------------------
-            # add current version and delivery (more for internal documentation)
-            redc_version = config_globals()[["current_version"]],
+            # add delivery (more for internal documentation)
             redc_delivery = config_globals()[["current_delivery_counter"]],
             #--------------------------------------------------
             # split date variable

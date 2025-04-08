@@ -234,6 +234,14 @@ cleaning_append_data <- function(
             " (Error code: cad#1)"
         )
     )
+
+    #--------------------------------------------------
+    # add version
+
+    housing_data_prep <- housing_data_prep |>
+        dplyr::mutate(
+            redc_version = config_globals()[["current_version"]]
+        )
     
     #--------------------------------------------------
     # return
