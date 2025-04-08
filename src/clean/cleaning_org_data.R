@@ -807,7 +807,7 @@ cleaning_org_data <- function(
             ),
             # remove Umlaute
             dplyr::across(
-                .cols = c("freiab", "strasse", "courtage", "mietekaution"),
+                .cols = dplyr::all_of(config_globals()[["text_variables"]]),
                 ~ stringi::stri_trans_general(.x, "de-ASCII; Latin-ASCII")
             )
         ) 
