@@ -774,6 +774,42 @@ cleaning_org_data <- function(
         rowNames = FALSE
     )
 
+    # export to latex (for reporting)
+    all_thresholds |>
+        kableExtra::kbl(
+            escape = FALSE,
+            format = "latex",
+            longtable = TRUE,
+            align = "l",
+            linesep = "",
+            caption = "Censoring Thresholds for Implausbible Values",
+            col.names = c(
+                "Variable",
+                "Threshold",
+                "\\makecell[l]{Threshold\\\\type}",
+                "Value"
+            ),
+            label = "thresholds_censoring"
+        ) |>
+        kableExtra::kable_styling(
+            latex_options = c(
+                "striped",
+                "hold_position"
+            ),
+            # NOTE: color is defined in report latex file
+            # see coding: \definecolor{user_gray}{rgb}{0.851,0.851,0.851}
+            stripe_color = "user_gray"
+        ) |>
+        kableExtra::save_kable(
+            file.path(
+                config_paths()[["output_path"]],
+                config_globals()[["current_version"]],
+                "info",
+                "thresholds_censoring.tex"
+            ),
+            label = "tab:thresholds_censoring"
+        )
+
     #--------------------------------------------------
     # checks
 
