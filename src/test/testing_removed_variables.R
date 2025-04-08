@@ -20,12 +20,14 @@ testing_removed_variables <- function() {
         file_location_current <- file.path(
             config_paths()[["output_path"]],
             config_globals()[["current_version"]],
+            "info",
             "variables_deleted_due_to_missings.txt"
         )
 
         file_location_prev <- file.path(
             config_paths()[["output_path"]],
             config_globals()[["previous_version"]],
+            "info",
             "variables_deleted_due_to_missings.txt"
         )
 
@@ -85,8 +87,13 @@ testing_removed_variables <- function() {
                 intersect(deleted_vars, deleted_vars_prev) # finds the common elements
             )
 
+            # only keep variables that have not been checked
+            difference_not_checked <- difference[
+                !difference %in% config_checked_variables_removed()
+            ]
+
             targets::tar_assert_true(
-                length(difference) == 0,
+                length(difference_not_checked) == 0,
                 msg = glue::glue(
                     "!!! ERROR: ",
                     "The following variables have been removed and different from
