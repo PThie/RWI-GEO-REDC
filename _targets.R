@@ -34,6 +34,7 @@ suppressPackageStartupMessages({
     library(ggplot2)
     library(MetBrewer)
     library(autometric)
+    library(kableExtra)
 })
 
 #--------------------------------------------------
@@ -145,8 +146,9 @@ targets_preparation_folders <- rlang::list2(
 #--------------------------------------------------
 # Prepare original files for further processing
 # Adjust the file naming
-# NOTE: This step is only if the new delivery comes in subfolders (add else clause
+# NOTE: This step is only needed if the new delivery comes in subfolders (add else clause
 # if needed). The past deliveries already have been cleaned.
+# NOTE: Currently, only affects Lieferung_2312.
 
 targets_files <- rlang::list2(
     tar_target(
@@ -264,7 +266,8 @@ targets_preparation <- rlang::list2(
             spatial_data_grids = spatial_data_grids,
             spatial_data_zip_code = spatial_data_zip_code,
             spatial_data_municipality = spatial_data_municipality,
-            spatial_data_district = spatial_data_district
+            spatial_data_district = spatial_data_district,
+            spatial_data_lmr = spatial_data_lmr
         )
     ),
     tar_fst(
@@ -358,6 +361,12 @@ targets_documentation <- rlang::list2(
         values = list(
             spatial_unit_names = rlang::syms(helpers_target_names()[["spatial_unit_names"]][1:2]),
             spatial_data = rlang::syms(helpers_target_names()[["spatial_data"]][1:2])
+        )
+    ),
+    tar_fst(
+        dataset_info,
+        exporting_dataset_info(
+            housing_data = housing_data_translated
         )
     )
 )
@@ -471,9 +480,9 @@ targets_pipeline_stats <- rlang::list2(
 
 rlang::list2(
     targets_preparation_folders,
-    # targets_files,
-    # targets_reading,
-    # targets_preparation,
+    targets_files,
+    targets_reading,
+    targets_preparation,
     # targets_append,
     # targets_combine_cleaning,
     # targets_suf_cleaning,
