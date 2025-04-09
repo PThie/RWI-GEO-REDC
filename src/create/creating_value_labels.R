@@ -273,7 +273,11 @@ creating_value_labels <- function(
                 variable == "security_deposit_type" & value == 6 ~ "No deposit",
                 #--------------------------------------------------
                 variable == "wheelchair_accessible" & value == 0 ~ "No",
-                variable == "wheelchair_accessible" & value == 1 ~ "Yes"
+                variable == "wheelchair_accessible" & value == 1 ~ "Yes",
+                #--------------------------------------------------
+                # TODO NEW WAVE: Update delivery numbers
+                variable == "redc_delivery" & value == 1 ~ "Jun 2023",
+                variable == "redc_delivery" & value == 2 ~ "Dec 2023"
             )
         )
 
