@@ -3,7 +3,8 @@ georeferencing_housing_data <- function(
     spatial_data_grids = NA,
     spatial_data_zip_code = NA,
     spatial_data_municipality = NA,
-    spatial_data_district = NA
+    spatial_data_district = NA,
+    spatial_data_lmr = NA
 ) {
     #' @title Geocoding the RED observations
     #' 
@@ -15,6 +16,7 @@ georeferencing_housing_data <- function(
     #' @param spatial_data_zip_code Spatial data of the zip codes
     #' @param spatial_data_municipality Spatial data of the municipalities
     #' @param spatial_data_district Spatial data of the districts
+    #' @param spatial_data_lmr Spatial data of the LMRs
     #' 
     #' @return DataFrame
     #' @author Patrick Thiel
@@ -144,6 +146,16 @@ georeferencing_housing_data <- function(
         )
     )
 
+    # add LMR
+    suppressWarnings(
+        housing_data_sf <- sf::st_join(
+            housing_data_sf,
+            spatial_data_lmr,
+            left = TRUE,
+            largest = TRUE
+        )
+    )
+
     # drop geometry
     housing_data_prep <- sf::st_drop_geometry(housing_data_sf)
 
@@ -169,8 +181,8 @@ georeferencing_housing_data <- function(
             ergg_1km = as.character(idm),
             dplyr::across(
                 .cols = c(
-                    "lat_gps", "lon_gps", "lat_utm",
-                    "lon_utm"
+                    "lat_gps", "lon_gps",
+                    "lat_utm", "lon_utm"
                 ),
                 ~ as.numeric(.x)
             )
@@ -246,6 +258,7 @@ georeferencing_housing_data <- function(
             lon_utm = helpers_missing_values()[["other"]],
             lat_utm = helpers_missing_values()[["other"]],
             ergg_1km = as.character(helpers_missing_values()[["other"]]),
+            lmr2018 = as.character(helpers_missing_values()[["other"]]),
             # use the given municipality information to add municipality and
             # district ID inline with the data set with coordinates
             gid2019 = as.character(gkz),

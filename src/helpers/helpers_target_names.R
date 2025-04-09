@@ -11,17 +11,17 @@ helpers_target_names <- function() {
     # list of target names
 
     # NOTE: define outside list to be able to use in list
-    spatial_units_english <- c("district", "municipality", "zip_code")
+    spatial_units_english <- c("district", "municipality", "zip_code", "lmr")
     exported_file_formats <- c("parquet", "csv")
 
     target_names <- list(
         #--------------------------------------------------
         # names for the spatial information
-        # NOTE: order has to match either other
-        "spatial_units_german" = c("Kreis", "Gemeinde", "PLZ"),
-        "ags_names" = c("kid2019", "gid2019", "plz2019"),
-        # NOTE: zip code does not have a GEN name
-        "gen_names" = c("kname2019", "gname2019", NA),
+        # NOTE: order has to match each other
+        "spatial_units_german" = c("Kreis", "Gemeinde", "PLZ", "AMR"),
+        "ags_names" = c("kid2019", "gid2019", "plz2019", "lmr2018"),
+        # NOTE: zip code and LMR do not have a GEN name
+        "gen_names" = c("kname2019", "gname2019", NA, NA),
         # name for the target objects
         "spatial_data" = glue::glue(
             "spatial_data_{spatial_units_english}"

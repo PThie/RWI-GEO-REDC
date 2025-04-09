@@ -34,20 +34,32 @@ reading_geo_data <- function(
     #--------------------------------------------------
     # read data
 
-    dta <- sf::st_read(
-        file.path(
-            config_paths()[["gebiete_path"]],
-            region,
-            year,
-            paste0(filename, ".shp")
-        ),
-        quiet = TRUE
-    )
+    if (spatial_unit == "AMR") {
+        dta <- sf::st_read(
+            file.path(
+                config_paths()[["gebiete_path"]],
+                "Arbeitsmarktregion",
+                "RWI2018",
+                "shapefiles",
+                "amr2.gpkg"
+            )
+        )
+    } else {
+        dta <- sf::st_read(
+            file.path(
+                config_paths()[["gebiete_path"]],
+                region,
+                year,
+                paste0(filename, ".shp")
+            ),
+            quiet = TRUE
+        )
+    }
 
     #--------------------------------------------------
     # cleaning
 
-    if (spatial_unit != "PLZ") {
+    if (!spatial_unit %in% c("PLZ", "AMR")) {
         dta <- dta |>
             # keep only AGS and geometry columns
             dplyr::select(
@@ -65,11 +77,22 @@ reading_geo_data <- function(
                 !!rlang::sym(ags_name) := AGS,
                 !!rlang::sym(gen_name) := GEN
             )
-    } else {
+    } else if (spatial_unit == "PLZ"){
         dta <- dta |>
             dplyr::rename(
                 !!rlang::sym(ags_name) := PLZ
             )
+    } else {
+        dta <- dta |>
+            dplyr::mutate(
+                    AMR2 = as.character(AMR2),
+                    AMR2 = stringr::str_pad(AMR2, 5, pad = "0")
+                ) |>
+            dplyr::rename(
+                !!rlang::sym(ags_name) := AMR2
+            )
+
+        sf::st_geometry(dta) <- "geometry"
     }
 
     # convert factors
