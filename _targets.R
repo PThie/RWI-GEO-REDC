@@ -259,21 +259,80 @@ targets_preparation <- rlang::list2(
             )
         )
     ),
+    #--------------------------------------------------
+    # georeferencing housing data
+    # NOTE: properties with and without coordinates are treated separately
     tar_target(
-        housing_data_geo,
-        georeferencing_housing_data(
-            housing_data = housing_data_cleaned,
-            spatial_data_grids = spatial_data_grids,
-            spatial_data_zip_code = spatial_data_zip_code,
-            spatial_data_municipality = spatial_data_municipality,
-            spatial_data_district = spatial_data_district,
-            spatial_data_lmr = spatial_data_lmr
+        housing_data_coordinates,
+        adding_conventional_coordinates(
+            housing_data = housing_data_cleaned
+        )
+    ),
+    # joining other spatial units
+    tar_fst(
+        housing_data_district,
+        adding_spatial_units(
+            housing_data = housing_data_coordinates[["housing_data_coords"]],
+            spatial_data = spatial_data_district
         )
     ),
     tar_fst(
+        housing_data_municipality,
+        adding_spatial_units(
+            housing_data = housing_data_district,
+            spatial_data = spatial_data_municipality
+        )
+    ),
+    tar_fst(
+        housing_data_zip_code,
+        adding_spatial_units(
+            housing_data = housing_data_municipality,
+            spatial_data = spatial_data_zip_code
+        )
+    ),
+    tar_fst(
+        housing_data_lmr,
+        adding_spatial_units(
+            housing_data = housing_data_zip_code,
+            spatial_data = spatial_data_lmr
+        )
+    ),
+    tar_fst(
+        housing_data_grids,
+        adding_spatial_units(
+            housing_data = housing_data_lmr,
+            spatial_data = spatial_data_grids
+        )
+    ),
+    tar_fst(
+        housing_data_spatial_cleaned,
+        cleaning_housing_spatial_data(
+            housing_data = housing_data_grids
+        )
+    ),
+    # cleaning housing data without coordinates
+    tar_fst(
+        housing_data_spatial_wo_coordinates_cleaned,
+        cleaning_housing_spatial_without_coordinates(
+            housing_data = housing_data_coordinates[["housing_data_wo_coords"]],
+            spatial_data_district = spatial_data_district,
+            spatial_data_municipality = spatial_data_municipality
+        )
+    ),
+    # # combine both datasets again
+    tar_fst(
+        housing_data_coordinates_combined,
+        appending_housing_with_without_coordinates(
+            housing_data_with_coordinates = housing_data_spatial_cleaned,
+            housing_data_without_coordinates = housing_data_spatial_wo_coordinates_cleaned
+        )
+    ),
+    #--------------------------------------------------
+    # finalizing housing data
+    tar_fst(
         finalized_data,
         testing_missing_variables(
-            housing_data = housing_data_geo
+            housing_data = housing_data_coordinates_combined
         )
     ),
     tar_target(
