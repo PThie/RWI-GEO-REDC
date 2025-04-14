@@ -21,7 +21,7 @@ exporting_dataset_info <- function(
     # time horizon
     housing_data <- housing_data |>
         dplyr::mutate(
-            year_mon = paste0("ejahr", - , "emonat")
+            year_mon = paste0(ejahr, "-" , emonat)
         )
 
     start_date <- min(housing_data$year_mon, na.rm = TRUE)
