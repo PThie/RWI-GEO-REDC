@@ -69,7 +69,8 @@ creating_variable_labels <- function(
                     "lon_gps",
                     "lon_utm",
                     "street",
-                    "zipcode"
+                    "zipcode",
+                    "lmr2018"
                 ) ~ "Regional information",
                 variable %in% c(
                     "ajahr",
@@ -86,7 +87,10 @@ creating_variable_labels <- function(
                     "energy_efficiency_class",
                     "heating_type",
                     "last_modernization",
-                    "property_condition"
+                    "property_condition",
+                    "heating_costs",
+                    "heating_costs_included_rent",
+                    "warm_water_cons_included_energy_cons"
                 ) ~ "Features related to energy and building structure",
                 grepl("bef", variable) ~ "Features related to energy and building structure",
                 variable %in% c(
@@ -105,6 +109,14 @@ creating_variable_labels <- function(
                     "plot_area",
                     "usable_area"
                 ) ~ "Features related to size",
+                variable %in% c(
+                    "num_hits_ad",
+                    "num_clicks_contact_button",
+                    "num_hits_result_list",
+                    "num_hits_search_request",
+                    "num_clicks_share_button",
+                    "num_clicks_url"
+                ) ~ "Features related to advertisement"
             )
         )
 
@@ -182,7 +194,17 @@ creating_variable_labels <- function(
                     variable == "uniqueID_gen" ~ "Unique ID (RWI)",
                     variable == "usable_area" ~ "Usable area (sq. meter)",
                     variable == "wheelchair_accessible" ~ "Indicator for wheelchair accessibility",
-                    variable == "zipcode" ~ "Zip code"
+                    variable == "zipcode" ~ "Zip code",
+                    variable == "heating_costs" ~ "Heating costs (EUR)",
+                    variable == "heating_costs_included_rent" ~ "Heating costs included inclusive rent",
+                    variable == "warm_water_cons_included_energy_cons" ~ "Warm water consumption included in energy consumption",
+                    variable == "num_hits_ad" ~ "Number of hits on ad",
+                    variable == "num_clicks_contact_button" ~ "Number of clicks on contact button",
+                    variable == "num_hits_result_list" ~ "Number of hits through result list",
+                    variable == "num_hits_search_request" ~ "Number of hits through search request",
+                    variable == "num_clicks_share_button" ~ "Number of clicks on share button",
+                    variable == "num_clicks_url" ~ "Number of clicks on customer URL",
+                    variable == "lmr2018" ~ "Labor market region ID 2018 (RWI)"
                 )
             )
 
@@ -229,7 +251,14 @@ creating_variable_labels <- function(
                         "security_deposit_price",
                         "spell",
                         "uniqueID_gen",
-                        "usable_area"
+                        "usable_area",
+                        "heating_costs",
+                        "num_hits_ad",
+                        "num_clicks_contact_button",
+                        "num_hits_result_list",
+                        "num_hits_search_request",
+                        "num_clicks_share_button",
+                        "num_clicks_url"
                     ) ~ "numeric",
                     variable %in% c(
                         "available_from",
@@ -245,7 +274,8 @@ creating_variable_labels <- function(
                         "obid",
                         "redc_version",
                         "street",
-                        "zipcode"
+                        "zipcode",
+                        "lmr2018"
                     ) ~ "character",
                     variable %in% c(
                         "basement",
@@ -264,7 +294,9 @@ creating_variable_labels <- function(
                         "security_deposit_type",
                         "wheelchair_accessible",
                         "blid",
-                        "redc_delivery"
+                        "redc_delivery",
+                        "heating_costs_included_rent",
+                        "warm_water_cons_included_energy_cons"
                     ) ~ "categorical",
                     grepl("bef", variable) ~ "numeric"
                 )

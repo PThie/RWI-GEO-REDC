@@ -275,6 +275,12 @@ creating_value_labels <- function(
                 variable == "wheelchair_accessible" & value == 0 ~ "No",
                 variable == "wheelchair_accessible" & value == 1 ~ "Yes",
                 #--------------------------------------------------
+                variable == "heating_costs_included_rent" & value == 0 ~ "No",
+                variable == "heating_costs_included_rent" & value == 1 ~ "Yes",
+                #--------------------------------------------------
+                variable == "warm_water_cons_included_energy_cons" & value == 0 ~ "No",
+                variable == "warm_water_cons_included_energy_cons" & value == 1 ~ "Yes",
+                #--------------------------------------------------
                 # TODO NEW WAVE: Update delivery numbers
                 variable == "redc_delivery" & value == 1 ~ "Jun 2023",
                 variable == "redc_delivery" & value == 2 ~ "Dec 2023"

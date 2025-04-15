@@ -34,7 +34,6 @@ helpers_translations <- function() {
         "parkplatz" = "parking",
         "rollstuhlgerecht" = "wheelchair_accessible",
         "heizungsart" = "heating_type",
-        "heizkosten" = "heating_costs",
         "energieausweistyp" = "energy_certificate_type",
         "ev_kennwert" = "energy_consumption_index",
         "energieeffizienzklasse" = "energy_efficiency_class",
@@ -46,7 +45,16 @@ helpers_translations <- function() {
         "nebenkosten_proqm" = "ancillary_costs_per_sqm",
         "mietekaution_price" = "security_deposit_price",
         "mietekaution_type" = "security_deposit_type",
-        "mietekaution_months" = "security_deposit_months"
+        "mietekaution_months" = "security_deposit_months",
+        "heizkosten" = "heating_costs",
+        "heizkosten_in_wm_enthalten" = "heating_costs_included_rent",
+        "ev_wwenthalten" = "warm_water_cons_included_energy_cons",
+        "hits" = "num_hits_ad",
+        "click_schnellkontakte" = "num_clicks_contact_button",  
+        "liste_show" = "num_hits_result_list",
+        "liste_match" = "num_hits_search_request",     
+        "click_weitersagen" = "num_clicks_share_button",
+        "click_url" = "num_clicks_url"
     )
 
     #--------------------------------------------------
