@@ -92,9 +92,9 @@ cleaning_org_data <- function(
             ),
             # replace help variable with splitted values (by "|")
             # output column will be of type list
-            bef_help = stringi::stri_split_fixed(bef_help, "\\|"),
+            bef_help = stringr::str_split(bef_help, "\\|"),
             # get the number of times "|" occured
-            bef_count = stringi::stri_count_fixed(befeuerungsarten, "\\|"),
+            bef_count = stringr::str_count(befeuerungsarten, "\\|"),
             #--------------------------------------------------
             # bauphase
             bauphase = dplyr::case_when(
