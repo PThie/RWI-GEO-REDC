@@ -27,7 +27,7 @@ creating_value_labels <- function(
     # data
     # TODO: if you pull bef from names of data, keep in mind that there are multiple
     # bef variables and you only need one (and drop the indexing)
-    var_names <- sort(c("bef", names(categorical_data)))
+    # var_names <- sort(c("bef", names(categorical_data)))
 
     #--------------------------------------------------
     # create vector of variable names (according to length of unique values)

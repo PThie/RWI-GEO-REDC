@@ -298,7 +298,7 @@ creating_variable_labels <- function(
                         "heating_costs_included_rent",
                         "warm_water_cons_included_energy_cons"
                     ) ~ "categorical",
-                    grepl("bef", variable) ~ "numeric"
+                    grepl("bef", variable) ~ "categorical"
                 )
             ) |>
             dplyr::rename(`variable type` = variable_type)
