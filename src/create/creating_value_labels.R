@@ -20,14 +20,13 @@ creating_value_labels <- function(
             variable_labels |>
                 dplyr::filter(`variable type` == "categorical") |>
                 dplyr::pull(variable)
-        )
+        ) |>
+        # exclude bef variables here because there is no need to separate them
+        # by number
+        dplyr::select(-dplyr::matches("bef"))
 
     # extract variable names
-    # TODO: this is only a hot fix. bef should be a categorical variable in the
-    # data
-    # TODO: if you pull bef from names of data, keep in mind that there are multiple
-    # bef variables and you only need one (and drop the indexing)
-    # var_names <- sort(c("bef", names(categorical_data)))
+    var_names <- sort(c("bef", names(categorical_data)))
 
     #--------------------------------------------------
     # create vector of variable names (according to length of unique values)
