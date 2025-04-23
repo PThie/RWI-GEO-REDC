@@ -18,19 +18,33 @@ appending_waves <- function(
 
     data_storage <- list()
     for (del in deliveries) {
-        dta <- arrow::read_parquet(
-            file.path(
-                config_paths()[["data_path"]],
-                "processed",
-                paste0("Lieferung_", del),
-                "clean_data.parquet"
+        if (del == 2306) {
+            dta <- arrow::read_parquet(
+                file.path(
+                    config_paths()[["data_path"]],
+                    "processed",
+                    paste0("Lieferung_", del),
+                    "fixed_bef",
+                    "clean_data_fixed_bef.parquet"
+                )
             )
-        )
+        } else {
+            dta <- arrow::read_parquet(
+                file.path(
+                    config_paths()[["data_path"]],
+                    "processed",
+                    paste0("Lieferung_", del),
+                    "clean_data.parquet"
+                )
+            )
+        }
 
         data_storage[[del]] <- dta
     }
 
+    #--------------------------------------------------
     # append all data
+
     dta_append <- data.table::rbindlist(data_storage, fill = TRUE)
 
     #--------------------------------------------------
