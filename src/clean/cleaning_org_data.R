@@ -1204,7 +1204,7 @@ cleaning_org_data <- function(
     # character columns
     char_cols <- c(
         "obid", "freiab", "courtage", "plz",
-        "strasse", "hausnr", "redc_version", "redc_delivery", "etage"
+        "strasse", "hausnr", "redc_delivery", "etage"
     )
 
     # Test that all columns are covered
