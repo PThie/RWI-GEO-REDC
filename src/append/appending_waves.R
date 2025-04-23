@@ -41,6 +41,48 @@ appending_waves <- function(
 
         data_storage[[del]] <- dta
     }
+    
+    #--------------------------------------------------
+    # identify new columns
+
+    col_names_storage <- list()
+    for (del in deliveries) {
+        col_names <- names(data_storage[[del]])
+        col_names_storage[[del]] <- col_names
+    }
+
+    # difference in columns of last delivery and previous delivery
+    col_diff <- setdiff(
+        col_names_storage[[length(col_names_storage)]],
+        col_names_storage[[length(col_names_storage) - 1]]
+    )
+
+    for (col in col_diff) {
+        # print new columns
+        cli::cli_alert_info(
+            cli::col_green(
+                "New column in latest delivery: {col}. Add to config_new_variables() if needed."
+            )
+        )
+    }
+
+    # check that all new columns have been added
+    current_delivery <- stringr::str_replace(
+        config_globals()[["current_delivery"]],
+        "Lieferung_",
+        ""
+    )
+    
+    targets::tar_assert_true(
+        all(
+            col_diff %in% config_new_variables()[[current_delivery]]
+        ),
+        msg = glue::glue(
+            "!!! WARNING: ",
+            "New columns in latest delivery are not added to config_new_variables().",
+            " (Error code: aw#1)"
+        )
+    )
 
     #--------------------------------------------------
     # append all data
