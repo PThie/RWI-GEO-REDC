@@ -337,7 +337,15 @@ targets_preparation <- rlang::list2(
     ),
     tar_target(
         removed_variables,
-        testing_removed_variables()
+        testing_removed_variables(
+            dependency = finalized_data
+        )
+    ),
+    #--------------------------------------------------
+    # fix for bef variables in delivery 2306
+    tar_fst(
+        housing_data_fixed_bef_2306,
+        fixing_bef_del_2306()
     )
 )
 
@@ -549,10 +557,10 @@ rlang::list2(
     targets_reading,
     targets_preparation,
     targets_append,
-    targets_combine_cleaning,
-    targets_suf_cleaning,
-    targets_documentation,
-    targets_export,
-    targets_unit_testing,
+    # targets_combine_cleaning,
+    # targets_suf_cleaning,
+    # targets_documentation,
+    # targets_export,
+    # targets_unit_testing,
     targets_pipeline_stats
 )

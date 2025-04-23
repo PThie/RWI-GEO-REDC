@@ -1,10 +1,15 @@
-testing_removed_variables <- function() {
+testing_removed_variables <- function(
+    dependency = NA
+) {
     #' @title Testing removed variables
     #' 
     #' @description This function checks if variables removed due to missing data
     #' and compares the list of removed variables between the current and previous.
     #' The list(s) can be empty.
     #' 
+    #' @param dependency Object from previous step to indicate dependency between
+    #' functions/ steps
+    #'  
     #' @return Vector with variables that have been removed and are different.
     #' Can be NULL, i.e. empty
     #' @author Patrick Thiel
