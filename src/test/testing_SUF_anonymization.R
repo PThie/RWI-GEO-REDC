@@ -70,7 +70,7 @@ testing_SUF_anonymization <- function(
 
     # test if all remaining grids are censored
     targets::tar_assert_true(
-        all(grids_censored %in% c("-9", "-7")),
+        all(grids_censored %in% c("-9", "-11")),
         msg = glue::glue(
             "!!! WARNING: ",
             "Not all remaining grids are censored.",
