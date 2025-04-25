@@ -14,6 +14,20 @@ appending_waves <- function(
     #' @author Patrick Thiel
     
     #--------------------------------------------------
+    # check dependency
+    # NOTE: do something with dependency, so it actually matters that you have
+    # passed it
+
+    targets::tar_assert_nonempty(
+        dependency,
+        msg = glue::glue(
+            "!!! ERROR: ",
+            "The dependency  is empty.",
+            " (Error code: aw#1)"
+        )
+    )
+
+    #--------------------------------------------------
     # read all data
 
     data_storage <- list()
@@ -80,7 +94,7 @@ appending_waves <- function(
         msg = glue::glue(
             "!!! WARNING: ",
             "New columns in latest delivery are not added to config_new_variables().",
-            " (Error code: aw#1)"
+            " (Error code: aw#2)"
         )
     )
 

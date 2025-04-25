@@ -15,6 +15,20 @@ testing_removed_variables <- function(
     #' @author Patrick Thiel
 
     #--------------------------------------------------
+    # check dependency
+    # NOTE: do something with dependency, so it actually matters that you have
+    # passed it
+
+    targets::tar_assert_nonempty(
+        dependency,
+        msg = glue::glue(
+            "!!! ERROR: ",
+            "The dependency  is empty.",
+            " (Error code: trv#1)"
+        )
+    )
+
+    #--------------------------------------------------
     # check if variables removed are consistent across versions
     # NOTE: not for v1 since there is no previous version
 
@@ -103,7 +117,7 @@ testing_removed_variables <- function(
                     "!!! ERROR: ",
                     "The following variables have been removed and different from
                     previous cleaning steps: {glue::glue_collapse(difference, sep = ', ')}",
-                    " (Error code: trv#1)"
+                    " (Error code: trv#2)"
                 )
             )
         }
