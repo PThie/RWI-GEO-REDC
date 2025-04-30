@@ -85,6 +85,14 @@ helpers_unique_categories <- function() {
         "bef" = list(
             "unique_values" = 27,
             "type" = "categorical"
+        ),
+        "heating_costs_included_rent" = list(
+            "unique_values" = 2,
+            "type" = "dummy"
+        ),
+        "warm_water_cons_included_energy_cons" = list(
+            "unique_values" = 2,
+            "type" = "dummy"
         )
     )
 

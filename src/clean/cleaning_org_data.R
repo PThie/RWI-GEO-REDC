@@ -21,8 +21,7 @@ cleaning_org_data <- function(
     housing_data_prep <- housing_data |>
         dplyr::mutate(
             #--------------------------------------------------
-            # add current version and delivery (more for internal documentation)
-            redc_version = config_globals()[["current_version"]],
+            # add delivery (more for internal documentation)
             redc_delivery = config_globals()[["current_delivery_counter"]],
             #--------------------------------------------------
             # split date variable
@@ -32,22 +31,6 @@ cleaning_org_data <- function(
             # end year and month
             ejahr = as.numeric(substring(zeitraum, first = 12, last = 15)),
             emonat = as.integer(substring(zeitraum, first = 16, last = 17)),
-            #--------------------------------------------------
-            # delivery 2312 has two variables referencing the energy class
-            # merge both
-            energieeffizienzklasse = dplyr::case_when(
-                energieeffizienzklasse == "" ~ NA_character_,
-                TRUE ~ energieeffizienzklasse
-            ),
-            # energieeffizienz_klasse = dplyr::case_when(
-            #     energieeffizienz_klasse == "" ~ NA_character_,
-            #     TRUE ~ energieeffizienz_klasse
-            # ),
-            # energieeffizienzklasse := data.table::fcoalesce(
-            #     energieeffizienzklasse,
-            #     energieeffizienz_klasse
-            # ),
-            # energieeffizienz_klasse = NULL,
             #--------------------------------------------------
             # fix housing type (remove Umlaute)
             immobilientyp = stringi::stri_trans_general(
@@ -68,6 +51,7 @@ cleaning_org_data <- function(
             ),
             # redefine anbieter
             anbieter = dplyr::case_when(
+                anbietertyp == "" ~ helpers_missing_values()[["not_specified"]],
                 anbietertyp == "Privatanbieter" ~ 1,
                 anbietertyp == "Makler" ~ 2,
                 anbietertyp == "Wohnungswirtschaft" ~ 3,
@@ -108,9 +92,9 @@ cleaning_org_data <- function(
             ),
             # replace help variable with splitted values (by "|")
             # output column will be of type list
-            bef_help = stringi::stri_split_fixed(bef_help, "\\|"),
+            bef_help = stringr::str_split(bef_help, "\\|"),
             # get the number of times "|" occured
-            bef_count = stringi::stri_count_fixed(befeuerungsarten, "\\|"),
+            bef_count = stringr::str_count(befeuerungsarten, "\\|"),
             #--------------------------------------------------
             # bauphase
             bauphase = dplyr::case_when(
@@ -148,13 +132,94 @@ cleaning_org_data <- function(
     # than defined in recoding
 
     targets::tar_assert_true(
-        length(unique(housing_data_prep$anbieter)) == 9,
+        length(unique(housing_data$anbietertyp)) == 10,
         msg = glue::glue(
             "!!! WARNING:
             Variable anbieter has more categories than defined in recoding.",
             "(Error code: cod#1)"
         )
     )
+
+    #--------------------------------------------------
+    # check that heizkosten_in_wm_enthalten is correctly recoded
+    # NOTE: check on orginal data set (i.e. before recoding)
+
+    targets::tar_assert_true(
+        all(
+            unique(housing_data$heizkosten_in_wm_enthalten) %in% c(
+                "null", "true", "false"
+            )
+        ),
+        msg = glue::glue(
+            "!!! WARNING:
+            Variable heizkosten_in_wm_enthalten has more categories than defined in recoding.",
+            "(Error code: cod#2)"
+        )
+    )
+
+    #--------------------------------------------------
+    # transform type of cold rent (mietekalt) if not numeric
+
+    if (typeof(housing_data_prep$mietekalt) == "character") {
+        housing_data_prep$mietekalt <- as.numeric(housing_data_prep$mietekalt)
+    }
+
+    #--------------------------------------------------
+    # clean energy efficiency class
+    # NOTE: delivery 2312 has two variables referencing the energy class
+    # merge both
+
+    if (config_globals()[["current_delivery"]] == "Lieferung_2306") {
+        housing_data_prep <- housing_data_prep |>
+            dplyr::mutate(
+                energieeffizienzklasse = dplyr::case_when(
+                    energieeffizienzklasse == "" ~ NA_character_,
+                    TRUE ~ energieeffizienzklasse
+                )
+            )
+    } else {
+        # set proper missings
+        housing_data_prep <- housing_data_prep |>
+            dplyr::mutate(
+                energieeffizienzklasse = dplyr::case_when(
+                    energieeffizienzklasse == "" ~ NA_character_,
+                    TRUE ~ energieeffizienzklasse
+                ),
+                energieeffizienz_klasse = dplyr::case_when(
+                    energieeffizienz_klasse == "" ~ NA_character_,
+                    TRUE ~ energieeffizienz_klasse
+                )
+            )
+        
+        # check that both types of varibles are not non-missing at the same time
+        # otherwise, the following procedure would overwrite one value (as it
+        # takes first value from energieeffizienzklasse and then energieeffizienz_klasse)
+        non_missings <- length(
+            which(
+                !is.na(housing_data_prep$energieeffizienzklasse) &
+                !is.na(housing_data_prep$energieeffizienz_klasse)
+            )
+        )
+
+        targets::tar_assert_true(
+            non_missings == 0,
+            msg = glue::glue(
+                "!!! WARNING:
+                Variable energieeffizienzklasse and energieeffizienz_klasse are both non-missing.",
+                "(Error code: cod#3)"
+            )
+        )
+
+        # combine both variables into one
+        housing_data_prep <- housing_data_prep |>
+            dplyr::mutate(
+                energieeffizienzklasse := data.table::fcoalesce(
+                    energieeffizienzklasse,
+                    energieeffizienz_klasse
+                ),
+                energieeffizienz_klasse = NULL
+            )
+    }
 
     #--------------------------------------------------
     # rename columns "bef" (befeuerungsarten)
@@ -212,14 +277,14 @@ cleaning_org_data <- function(
             "ort"
         )) {
             targets::tar_assert_true(
-                # length(unique(housing_data_prep[[var]])) == 1,
                 all(unique(housing_data_prep[[var]]) %in% c(
-                    NA, "nicht mehr existent"
+                    NA, "nicht mehr existent", -1,
+                    "", "null"
                 )),
                 msg = glue::glue(
                     "!!! WARNING:
                     Variable {var} has more than one value.",
-                    "(Error code: cod#2)"
+                    "(Error code: cod#4)"
                 )
             )
         }
@@ -263,7 +328,7 @@ cleaning_org_data <- function(
             msg = glue::glue(
                 "!!! WARNING:
                 Variable {col} has values that are not considered in the recoding.",
-                "(Error code: cod#3)"
+                "(Error code: cod#5)"
             )
         )
     }
@@ -280,6 +345,20 @@ cleaning_org_data <- function(
                     .x %in% helpers_missing_values()[["not_specified_variants"]] ~ helpers_missing_values()[["not_specified"]],
                     TRUE ~ helpers_missing_values()[["other"]]
                 )
+            )
+        )
+
+    #--------------------------------------------------
+    # fix zip-codes
+    # for a few observations there is a "D-" in front of the zip code
+    # e.g. "D-58095"
+
+    housing_data_prep <- housing_data_prep |>
+        dplyr::mutate(
+            plz = dplyr::case_when(
+                stringr::str_detect(plz, "D-") ~ stringr::str_replace_all(plz, "D-", ""),
+                stringr::str_detect(plz, "D ") ~ stringr::str_replace_all(plz, "D ", ""),
+                TRUE ~ plz
             )
         )
 
@@ -451,13 +530,19 @@ cleaning_org_data <- function(
         #--------------------------------------------------
         # actual check
 
+        # NOTE: the missing values are transformed to our missings in the process
+        # above, but are still included in the raw data used for this check
+        unique_values <- unique(dta[[var]])[
+            !unique(dta[[var]]) %in% c("")
+        ]
+
         targets::tar_assert_true(
-            length(unique(dta[[var]])) == expected_unique_values,
+            length(unique_values) == expected_unique_values,
             msg = glue::glue(
                 "!!! WARNING: ",
                 "Variable {var} contains unexpected values. ",
                 "Please check the data and recode if necessary.",
-                "(Error code: cod#4)"
+                " (Error code: cod#6)"
             )
         )
     }
@@ -562,7 +647,7 @@ cleaning_org_data <- function(
         "mietekalt",
         "nebenkosten",
         "teilbar_ab",
-        "nebenkosten"
+        "heizkosten"
     )
 
     # calculate thresholds
@@ -621,7 +706,7 @@ cleaning_org_data <- function(
             ),
             plz = dplyr::case_when(
                 # censor if zip code is not complete
-                nchar(plz) == 4 ~ as.character(
+                nchar(plz) <= 4 ~ as.character(
                     helpers_missing_values()[["implausible"]]
                 ),
                 TRUE ~ plz
@@ -689,6 +774,42 @@ cleaning_org_data <- function(
         rowNames = FALSE
     )
 
+    # export to latex (for reporting)
+    all_thresholds |>
+        kableExtra::kbl(
+            escape = FALSE,
+            format = "latex",
+            longtable = TRUE,
+            align = "l",
+            linesep = "",
+            caption = "Censoring Thresholds for Implausbible Values",
+            col.names = c(
+                "Variable",
+                "Threshold",
+                "\\makecell[l]{Threshold\\\\type}",
+                "Value"
+            ),
+            label = "thresholds_censoring"
+        ) |>
+        kableExtra::kable_styling(
+            latex_options = c(
+                "striped",
+                "hold_position"
+            ),
+            # NOTE: color is defined in report latex file
+            # see coding: \definecolor{user_gray}{rgb}{0.851,0.851,0.851}
+            stripe_color = "user_gray"
+        ) |>
+        kableExtra::save_kable(
+            file.path(
+                config_paths()[["output_path"]],
+                config_globals()[["current_version"]],
+                "info",
+                "thresholds_censoring.tex"
+            ),
+            label = "tab:thresholds_censoring"
+        )
+
     #--------------------------------------------------
     # checks
 
@@ -697,12 +818,15 @@ cleaning_org_data <- function(
     # NOTE: check based on raw data since the recoding is already applied for
     # prepared data
     targets::tar_assert_true(
-        length(unique(nchar(housing_data$plz))) == 3,
+        all(
+            # NOTE: 2 = missings, 5 = regular zip code
+            unique(nchar(housing_data_prep$plz)) %in% c(2, 5)
+        ),
         msg = glue::glue(
             "!!! WARNING:
             Variable plz contains unexpected values. ",
             "Please check the data and recode if necessary.",
-            "(Error code: cod#5)"
+            "(Error code: cod#7)"
         )
     )
     
@@ -717,16 +841,9 @@ cleaning_org_data <- function(
                 mietekalt == kaufpreis ~ helpers_missing_values()[["other"]],
                 TRUE ~ kaufpreis
             ),
-            # fix zip code
-            # for a few observations there is a "D-" in front of the zip code
-            # e.g. "D-58095"
-            plz = dplyr::case_when(
-                stringr::str_detect(plz, "D-") ~ stringr::str_replace_all(plz, "D-", ""),
-                TRUE ~ plz
-            ),
             # remove Umlaute
             dplyr::across(
-                .cols = c("freiab", "strasse", "courtage", "mietekaution"),
+                .cols = dplyr::all_of(config_globals()[["text_variables"]]),
                 ~ stringi::stri_trans_general(.x, "de-ASCII; Latin-ASCII")
             )
         ) 
@@ -1050,7 +1167,7 @@ cleaning_org_data <- function(
             "!!! Warning: ",
             "Security deposit months and security deposit price do not have the same",
             "length in zero values. By definition it should be identical.",
-            "(Error code: cod#6)"
+            "(Error code: cod#8)"
         )
     )
 
@@ -1080,13 +1197,14 @@ cleaning_org_data <- function(
         "kaufpreis", "mietekalt", "nebenkosten", "geox", "geoy", "miete_proqm",                                 
         "teilbar_ab", "nebenkosten_proqm", "ev_kennwert",
         "hits", "click_schnellkontakte", "liste_show", "liste_match",
-        "click_weitersagen", "click_url", "mietekaution_months", "mietekaution_price"
+        "click_weitersagen", "click_url", "mietekaution_months", "mietekaution_price",
+        "heizkosten"
     )
 
     # character columns
     char_cols <- c(
         "obid", "freiab", "courtage", "plz",
-        "strasse", "hausnr", "redc_version", "redc_delivery", "etage"
+        "strasse", "hausnr", "redc_delivery", "etage"
     )
 
     # Test that all columns are covered
@@ -1102,7 +1220,7 @@ cleaning_org_data <- function(
             msg = glue::glue(
                 "!!! WARNING: ",
                 "Variable {var} not covered in the type setting. ",
-                "(Error code: cod#7)"
+                "(Error code: cod#9)"
             )
         )
     }
@@ -1115,7 +1233,7 @@ cleaning_org_data <- function(
             msg = glue::glue(
                 "!!! WARNING: ",
                 "Variable {var} is specified to be deleted but is covered in the type setting. ",
-                "(Error code: cod#8)"
+                "(Error code: cod#10)"
             )
         )
     }

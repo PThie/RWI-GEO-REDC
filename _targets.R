@@ -33,32 +33,14 @@ suppressPackageStartupMessages({
     library(zoo)
     library(ggplot2)
     library(MetBrewer)
+    library(autometric)
+    library(kableExtra)
 })
 
 #--------------------------------------------------
 # working directory
 
 setwd(here())
-
-#--------------------------------------------------
-# Pipeline settings
-
-# target options
-tar_option_set(
-    resources = tar_resources(
-        fst = tar_resources_fst(compress = 50)
-    ),
-    seed = 1,
-    garbage_collection = TRUE,
-    memory = "transient",
-    controller = crew_controller_local(
-        name = "my_controller",
-        workers = 3,
-        seconds_idle = 10
-    ),
-    retrieval = "worker",
-    storage = "worker"
-)
 
 #--------------------------------------------------
 # load configurations
@@ -72,6 +54,36 @@ source(
         "helpers",
         "config.R"
     )
+)
+
+#--------------------------------------------------
+# Pipeline settings
+
+# target options
+controller <- crew_controller_local(
+    name = "worker",
+    workers = 3,
+    seconds_idle = 10,
+    options_metrics = crew_options_metrics(
+        path = file.path(
+            config_paths()[["logs_path"]],
+            "worker_metrics",
+            "worker_metrics_history"
+        ),
+        seconds_interval = 1
+    )
+)
+
+tar_option_set(
+    resources = tar_resources(
+        fst = tar_resources_fst(compress = 50)
+    ),
+    seed = 1,
+    garbage_collection = TRUE,
+    memory = "transient",
+    controller = controller,
+    retrieval = "worker",
+    storage = "worker"
 )
 
 #--------------------------------------------------
@@ -134,8 +146,9 @@ targets_preparation_folders <- rlang::list2(
 #--------------------------------------------------
 # Prepare original files for further processing
 # Adjust the file naming
-# NOTE: This step is only if the new delivery comes in subfolders (add else clause
+# NOTE: This step is only needed if the new delivery comes in subfolders (add else clause
 # if needed). The past deliveries already have been cleaned.
+# NOTE: Currently, only affects Lieferung_2312.
 
 targets_files <- rlang::list2(
     tar_target(
@@ -246,25 +259,93 @@ targets_preparation <- rlang::list2(
             )
         )
     ),
+    #--------------------------------------------------
+    # georeferencing housing data
+    # NOTE: properties with and without coordinates are treated separately
     tar_target(
-        housing_data_geo,
-        georeferencing_housing_data(
-            housing_data = housing_data_cleaned,
-            spatial_data_grids = spatial_data_grids,
-            spatial_data_zip_code = spatial_data_zip_code,
-            spatial_data_municipality = spatial_data_municipality,
-            spatial_data_district = spatial_data_district
+        housing_data_coordinates,
+        adding_conventional_coordinates(
+            housing_data = housing_data_cleaned
+        )
+    ),
+    # joining other spatial units
+    tar_fst(
+        housing_data_district,
+        adding_spatial_units(
+            housing_data = housing_data_coordinates[["housing_data_coords"]],
+            spatial_data = spatial_data_district
         )
     ),
     tar_fst(
+        housing_data_municipality,
+        adding_spatial_units(
+            housing_data = housing_data_district,
+            spatial_data = spatial_data_municipality
+        )
+    ),
+    tar_fst(
+        housing_data_zip_code,
+        adding_spatial_units(
+            housing_data = housing_data_municipality,
+            spatial_data = spatial_data_zip_code
+        )
+    ),
+    tar_fst(
+        housing_data_lmr,
+        adding_spatial_units(
+            housing_data = housing_data_zip_code,
+            spatial_data = spatial_data_lmr
+        )
+    ),
+    tar_fst(
+        housing_data_grids,
+        adding_spatial_units(
+            housing_data = housing_data_lmr,
+            spatial_data = spatial_data_grids
+        )
+    ),
+    tar_fst(
+        housing_data_spatial_cleaned,
+        cleaning_housing_spatial_data(
+            housing_data = housing_data_grids
+        )
+    ),
+    # cleaning housing data without coordinates
+    tar_fst(
+        housing_data_spatial_wo_coordinates_cleaned,
+        cleaning_housing_spatial_without_coordinates(
+            housing_data = housing_data_coordinates[["housing_data_wo_coords"]],
+            spatial_data_district = spatial_data_district,
+            spatial_data_municipality = spatial_data_municipality
+        )
+    ),
+    # # combine both datasets again
+    tar_fst(
+        housing_data_coordinates_combined,
+        appending_housing_with_without_coordinates(
+            housing_data_with_coordinates = housing_data_spatial_cleaned,
+            housing_data_without_coordinates = housing_data_spatial_wo_coordinates_cleaned
+        )
+    ),
+    #--------------------------------------------------
+    # finalizing housing data
+    tar_fst(
         finalized_data,
         testing_missing_variables(
-            housing_data = housing_data_geo
+            housing_data = housing_data_coordinates_combined
         )
     ),
     tar_target(
         removed_variables,
-        testing_removed_variables()
+        testing_removed_variables(
+            dependency = finalized_data
+        )
+    ),
+    #--------------------------------------------------
+    # fix for bef variables in delivery 2306
+    tar_fst(
+        housing_data_fixed_bef_2306,
+        fixing_bef_del_2306()
     )
 )
 
@@ -292,9 +373,15 @@ targets_combine_cleaning <- rlang::list2(
         )
     ),
     tar_fst(
+        housing_data_fixed_new,
+        cleaning_missings_new_variables(
+            housing_data = housing_data_append_cleaned
+        )
+    ),
+    tar_fst(
         housing_data_translated,
         translating_variables(
-            housing_data = housing_data_append_cleaned
+            housing_data = housing_data_fixed_new
         )
     )
 )
@@ -348,6 +435,12 @@ targets_documentation <- rlang::list2(
             spatial_unit_names = rlang::syms(helpers_target_names()[["spatial_unit_names"]][1:2]),
             spatial_data = rlang::syms(helpers_target_names()[["spatial_data"]][1:2])
         )
+    ),
+    tar_fst(
+        dataset_info,
+        exporting_dataset_info(
+            housing_data = housing_data_translated
+        )
     )
 )
 
@@ -388,7 +481,8 @@ targets_unit_testing <- rlang::list2(
                 ),
                 reading_exported_data(
                     data_path = !!.x,
-                    file_format = exported_file_formats
+                    file_format = exported_file_formats,
+                    dependency = housing_data_exported
                 )
             ),
             #--------------------------------------------------
@@ -443,11 +537,14 @@ targets_unit_testing <- rlang::list2(
 # pipeline stats
 
 targets_pipeline_stats <- rlang::list2(
-    # NOTE: targets type has to be tar_file in order to use tar_progress_summary
-    # and tar_crew within the pipeline
-    tar_file(
-        pipeline_stats,
-        helpers_monitoring_pipeline(),
+	tar_file(
+		pipeline_stats,
+		helpers_monitoring_pipeline(),
+		cue = tar_cue(mode = "always")
+	),
+    tar_target(
+        worker_stats,
+        reading_worker_stats(),
         cue = tar_cue(mode = "always")
     )
 )

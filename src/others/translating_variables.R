@@ -44,7 +44,8 @@ translating_variables <- function(
         "kid2019",
         "spell",
         "uniqueID_gen",
-        "dupID_gen"
+        "dupID_gen",
+        "lmr2018"
     )
 
     #--------------------------------------------------
@@ -84,7 +85,16 @@ translating_variables <- function(
         "nebenkosten_proqm",
         "mietekaution_price",
         "mietekaution_type",
-        "mietekaution_months"
+        "mietekaution_months",
+        "heizkosten",    
+        "heizkosten_in_wm_enthalten",
+        "ev_wwenthalten",
+        "hits",
+        "click_schnellkontakte",  
+        "liste_show",
+        "liste_match",               
+        "click_weitersagen",
+        "click_url"  
     )
 
     #--------------------------------------------------

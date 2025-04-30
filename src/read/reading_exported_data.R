@@ -1,6 +1,7 @@
 reading_exported_data <- function(
     data_path = NA,
-    file_format = NA
+    file_format = NA,
+    dependency = NA
 ) {
     #' @title Read exported data
     #' 
@@ -8,9 +9,25 @@ reading_exported_data <- function(
     #' 
     #' @param data_path Path to the exported data
     #' @param file_format File format of the exported data (character)
+    #' @param dependency Object from previous step to indicate dependency between
+    #' functions/ steps
     #' 
     #' @return Dataframe with the exported data
     #' @author Patrick Thiel
+
+    #--------------------------------------------------
+    # check dependency
+    # NOTE: do something with dependency, so it actually matters that you have
+    # passed it
+
+    targets::tar_assert_nonempty(
+        dependency,
+        msg = glue::glue(
+            "!!! ERROR: ",
+            "The dependency  is empty.",
+            " (Error code: red#1)"
+        )
+    )
 
     #--------------------------------------------------
     # test that file formats did not change since the last time
@@ -21,7 +38,7 @@ reading_exported_data <- function(
         msg = glue::glue(
             "!!! WARNING: ",
             "The file formats for the exported data have changed.",
-            " (Error code: red#1)"
+            " (Error code: red#2)"
         )
     )
     

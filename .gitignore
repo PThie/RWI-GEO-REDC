@@ -4,7 +4,6 @@ NLP
 NLP.zip
 renv
 .Rprofile
-renv.lock
 run.R
 run.sh
 documentation

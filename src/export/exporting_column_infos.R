@@ -20,51 +20,37 @@ exporting_column_infos <- function(
         #--------------------------------------------------
         # extract column types and names
 
-        coltypes <- sapply(housing_data, class) |>
-            unlist() |>
-            as.data.frame() |>
-            dplyr::rename(columns_types = 1)
-
-        coltypes$columns <- rownames(coltypes)
-        rownames(coltypes) <- NULL
-
-        coltypes <- coltypes |>
-            dplyr::relocate(columns) |>
-            # handle that Einstelldatum has two types
-            dplyr::filter(
-                columns != "Einstelldatum2"
-            ) |>
-            dplyr::mutate(
-                columns = dplyr::case_when(
-                    columns == "Einstelldatum1" ~ "Einstelldatum",
-                    TRUE ~ columns
-                )
-            )
+        coltypes <- helpers_extracting_column_info(
+            housing_data = housing_data
+        )
 
         #--------------------------------------------------
         # export
+        # NOTE: version is hard coded because the version in globals changes
 
         data.table::fwrite(
             coltypes,
             file.path(
                 config_paths()[["output_path"]],
-                config_globals()[["current_version"]],
+                "v1",
+                "info",
+                "column_types.csv"
+            )
+        )
+    } else {
+        #--------------------------------------------------
+        # re-read column types and names of the first delivery
+        # NOTE: version is hard coded because the version in globals changes
+        
+        coltypes <- data.table::fread(
+            file.path(
+                config_paths()[["output_path"]],
+                "v1",
                 "info",
                 "column_types.csv"
             )
         )
     }
-
-    #--------------------------------------------------
-    # re-read column types and names of the first delivery
-
-    coltypes <- data.table::fread(
-        file.path(
-            config_paths()[["output_path"]],
-            config_globals()[["current_version"]],
-            "column_types.csv"
-        )
-    )
 
     #--------------------------------------------------
     # return
