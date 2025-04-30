@@ -40,7 +40,7 @@ anonymizing_SUF_data <- function(
         dplyr::mutate(
             ergg_1km = dplyr::case_when(
                 censor_grid_id == 1 ~ as.character(
-                    helpers_missing_values()[["other"]]
+                    helpers_missing_values()[["censored"]]
                 ),
                 TRUE ~ ergg_1km
             )

@@ -14,6 +14,7 @@ helpers_missing_values <- function() {
         "not_used_anymore" = -6,
         "not_specified" = -7,
         "other" = -9,
+        "censored" = -11,
         "immo_missing" = -1, # how ImmoScout defines missings
         # how not specified appear in the data (in German)
         "not_specified_variants" = c("keine Angabe", "Keine Angabe", "keine Angaben")

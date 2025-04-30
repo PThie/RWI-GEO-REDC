@@ -20,13 +20,12 @@ creating_value_labels <- function(
             variable_labels |>
                 dplyr::filter(`variable type` == "categorical") |>
                 dplyr::pull(variable)
-        )
+        ) |>
+        # exclude bef variables here because there is no need to separate them
+        # by number
+        dplyr::select(-dplyr::matches("bef"))
 
     # extract variable names
-    # TODO: this is only a hot fix. bef should be a categorical variable in the
-    # data
-    # TODO: if you pull bef from names of data, keep in mind that there are multiple
-    # bef variables and you only need one (and drop the indexing)
     var_names <- sort(c("bef", names(categorical_data)))
 
     #--------------------------------------------------
@@ -273,7 +272,17 @@ creating_value_labels <- function(
                 variable == "security_deposit_type" & value == 6 ~ "No deposit",
                 #--------------------------------------------------
                 variable == "wheelchair_accessible" & value == 0 ~ "No",
-                variable == "wheelchair_accessible" & value == 1 ~ "Yes"
+                variable == "wheelchair_accessible" & value == 1 ~ "Yes",
+                #--------------------------------------------------
+                variable == "heating_costs_included_rent" & value == 0 ~ "No",
+                variable == "heating_costs_included_rent" & value == 1 ~ "Yes",
+                #--------------------------------------------------
+                variable == "warm_water_cons_included_energy_cons" & value == 0 ~ "No",
+                variable == "warm_water_cons_included_energy_cons" & value == 1 ~ "Yes",
+                #--------------------------------------------------
+                # TODO NEW WAVE: Update delivery numbers
+                variable == "redc_delivery" & value == 1 ~ "Jun 2023",
+                variable == "redc_delivery" & value == 2 ~ "Dec 2023"
             )
         )
 

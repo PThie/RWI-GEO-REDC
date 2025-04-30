@@ -19,9 +19,20 @@ reading_org_data <- function(redc_raw_file = NA) {
         encoding = "UTF-8"
     )
 
+    #--------------------------------------------------
+    # check that dataframe is not empty
+
+    targets::tar_assert_nonempty(
+        org_data,
+        msg = glue::glue(
+            "!!! WARNING:",
+            " Dataset is empty.",
+            " (Error code: rod#1)"
+        )
+    )
+
     #----------------------------------------------
     # return
 
     return(org_data)
-
 }
