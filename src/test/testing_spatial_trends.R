@@ -131,24 +131,27 @@ testing_spatial_trends <- function(
 
     for (year in unique(housing_data_prices_sf$ejahr)) {
         plotting_map(
-            housing_data = housing_data_prices_sf,
+            housing_data = housing_data_prices_sf |>
+                dplyr::filter(ejahr == year),
             variable_of_interest = "listing_price_sqm",
             legend_name = "Avg. price per sqm. (EUR)",
-            breaks_steps = 2000,
+            breaks_steps = 4000,
             file_name = paste0("listing_price_sqm_", year)
         )
 
         plotting_map(
-            housing_data = housing_data_prices_sf,
+            housing_data = housing_data_prices_sf |>
+                dplyr::filter(ejahr == year),
             variable_of_interest = "listing_price_sqm",
             legend_name = "Durchschn. Preis pro qm. (EUR)",
-            breaks_steps = 2000,
+            breaks_steps = 4000,
             file_name = paste0("german_listing_price_sqm_", year),
             german = TRUE
         )
         
         plotting_map(
-            housing_data = housing_data_prices_sf,
+            housing_data = housing_data_prices_sf |>
+                dplyr::filter(ejahr == year),
             variable_of_interest = "rent_per_sqm",
             legend_name = "Rent per sqm. (EUR)",
             breaks_steps = 4,
