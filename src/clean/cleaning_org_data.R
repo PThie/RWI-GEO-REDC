@@ -131,8 +131,23 @@ cleaning_org_data <- function(
     # check that anbieter is correctly recoded, i.e. has not more categories
     # than defined in recoding
 
+    anbieter_cats_considered <- c(
+        "",
+        "Privatanbieter",
+        "Makler",
+        "Wohnungswirtschaft",
+        "Bauträger",
+        "Finanzsektor",
+        "Gewerbeanbieter",
+        "Hausbau",
+        "Umzug",
+        "unbekannt"
+    )
+
     targets::tar_assert_true(
-        length(unique(housing_data$anbietertyp)) == 10,
+        all(
+            unique(housing_data$anbietertyp) %in% anbieter_cats_considered
+        ),
         msg = glue::glue(
             "!!! WARNING:
             Variable anbieter has more categories than defined in recoding.",
