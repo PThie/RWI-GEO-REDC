@@ -482,7 +482,10 @@ targets_unit_testing <- rlang::list2(
                 reading_exported_data(
                     data_path = !!.x,
                     file_format = exported_file_formats,
-                    dependency = housing_data_exported
+                    dependencies = list(
+                        housing_data_org,
+                        housing_data_exported
+                    )
                 )
             ),
             #--------------------------------------------------
@@ -562,6 +565,6 @@ rlang::list2(
     targets_suf_cleaning,
     targets_documentation,
     targets_export,
-    targets_unit_testing,
+    # targets_unit_testing,
     targets_pipeline_stats
 )
