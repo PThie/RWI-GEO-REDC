@@ -131,22 +131,17 @@ cleaning_org_data <- function(
     # check that anbieter is correctly recoded, i.e. has not more categories
     # than defined in recoding
 
-    anbieter_cats_considered <- c(
-        "",
-        "Privatanbieter",
-        "Makler",
-        "Wohnungswirtschaft",
-        "Bauträger",
-        "Finanzsektor",
-        "Gewerbeanbieter",
-        "Hausbau",
-        "Umzug",
-        "unbekannt"
-    )
+    dta <- housing_data |>
+        dplyr::mutate(
+            anbietertyp = stringi::stri_trans_general(
+                anbietertyp,
+                "de-ASCII; Latin-ASCII"
+            )
+        )
 
     targets::tar_assert_true(
         all(
-            unique(housing_data$anbietertyp) %in% anbieter_cats_considered
+            unique(dta$anbietertyp) %in% helpers_original_categories()[["anbieter"]]
         ),
         msg = glue::glue(
             "!!! WARNING:
@@ -184,13 +179,30 @@ cleaning_org_data <- function(
     # NOTE: delivery 2312 has two variables referencing the energy class
     # merge both
 
-    if (config_globals()[["current_delivery"]] == "Lieferung_2306") {
+    if (
+        ("energieeffizienzklasse" %in% names(housing_data_prep)) &
+        !("energieeffizienz_klasse" %in% names(housing_data_prep))
+    ) {
         housing_data_prep <- housing_data_prep |>
             dplyr::mutate(
                 energieeffizienzklasse = dplyr::case_when(
                     energieeffizienzklasse == "" ~ NA_character_,
                     TRUE ~ energieeffizienzklasse
                 )
+            )
+    } else if (
+        !("energieeffizienzklasse" %in% names(housing_data_prep)) &
+        ("energieeffizienz_klasse" %in% names(housing_data_prep))
+    ) {
+        housing_data_prep <- housing_data_prep |>
+            dplyr::mutate(
+                energieeffizienz_klasse = dplyr::case_when(
+                    energieeffizienz_klasse == "" ~ NA_character_,
+                    TRUE ~ energieeffizienz_klasse
+                )
+            ) |>
+            dplyr::rename(
+                energieeffizienzklasse = energieeffizienz_klasse
             )
     } else {
         # set proper missings
@@ -449,7 +461,8 @@ cleaning_org_data <- function(
                 objektkategorie2 == "Restaurant" ~ 10,       
                 objektkategorie2 == "Anwesen" ~ 11,              
                 objektkategorie2 == "Einkaufszentrum" ~ 12,              
-                objektkategorie2 == "Café" ~ 13,         
+                objektkategorie2 == "Café" ~ 13,
+                objektkategorie2 == "Cafe" ~ 13,         
                 objektkategorie2 == "Gaestehaus" ~ 14,                  
                 objektkategorie2 == "Freizeitanlage" ~ 15,                
                 objektkategorie2 == "Gewerbezentrum" ~ 16,                
@@ -508,11 +521,11 @@ cleaning_org_data <- function(
                 TRUE ~ helpers_missing_values()[["other"]]
             ),
             immobilientyp = dplyr::case_when(
-                immobilientyp == "Buero_Praxis" ~ 1,
+                immobilientyp %in% c("Buero_Praxis", "Buero Praxis") ~ 1,
                 immobilientyp == "Einzelhandel" ~ 2,
-                immobilientyp == "Hallen_Produktion" ~ 3,
+                immobilientyp %in% c("Hallen_Produktion", "Hallen Produktion") ~ 3,
                 immobilientyp == "Spezialgewerbe" ~ 4,
-                immobilientyp == "Gastronomie_Hotel" ~ 5,
+                immobilientyp %in% c("Gastronomie_Hotel", "Gastronomie Hotel") ~ 5,
                 immobilientyp %in% helpers_missing_values()[["not_specified_variants"]] ~ helpers_missing_values()[["not_specified"]],
                 TRUE ~ helpers_missing_values()[["other"]]
             )
@@ -526,12 +539,11 @@ cleaning_org_data <- function(
     # NOTE: use original data for this check (i.e. without recoding)
 
     # function to avoid repetition
-    recoding_length_check <- function(var, expected_unique_values) {
-        #' @description Function to check if a variable has the expected number of
+    recoding_length_check <- function(var) {
+        #' @description Function to check if a variable has the expected
         #' unique values. Otherwise, recoding needs to be adjusted.
         #' 
         #' @param var Name of the variable to be checked.
-        #' @param expected_unique_values Expected number of unique values.
         
         #--------------------------------------------------
         # rename some variables to align with naming above
@@ -540,6 +552,24 @@ cleaning_org_data <- function(
             dplyr::rename(
                 ausstattung = ausstattungsqualitaet,
                 kategorie_business = objektkategorie2
+            )
+
+        if ("energieeffizienz_klasse" %in% names(dta)) {
+            dta <- dta |>
+                dplyr::rename(
+                    energieeffizienzklasse = energieeffizienz_klasse
+                )
+        }
+
+        #--------------------------------------------------
+        # remove Umlaute
+
+        dta <- dta |>
+            dplyr::mutate(
+                {{var}} := stringi::stri_trans_general(
+                        .data[[var]],
+                        "de-ASCII; Latin-ASCII"
+                    )
             )
         
         #--------------------------------------------------
@@ -552,7 +582,7 @@ cleaning_org_data <- function(
         ]
 
         targets::tar_assert_true(
-            length(unique_values) == expected_unique_values,
+            all(unique_values %in% helpers_original_categories()[[var]]),
             msg = glue::glue(
                 "!!! WARNING: ",
                 "Variable {var} contains unexpected values. ",
@@ -563,13 +593,13 @@ cleaning_org_data <- function(
     }
 
     # check recoding
-    recoding_length_check("ausstattung", 5)
-    recoding_length_check("energieeffizienzklasse", 10)
-    recoding_length_check("energieausweistyp", 3)
-    recoding_length_check("heizungsart", 14)
-    recoding_length_check("kategorie_business", 54)
-    recoding_length_check("objektzustand", 11)
-    recoding_length_check("immobilientyp", 5)
+    recoding_length_check("ausstattung")
+    recoding_length_check("energieeffizienzklasse")
+    recoding_length_check("energieausweistyp")
+    recoding_length_check("heizungsart")
+    recoding_length_check("kategorie_business")
+    recoding_length_check("objektzustand")
+    recoding_length_check("immobilientyp")
 
     #--------------------------------------------------
     # issue of rent
