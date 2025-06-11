@@ -282,7 +282,9 @@ creating_value_labels <- function(
                 #--------------------------------------------------
                 # TODO NEW WAVE: Update delivery numbers
                 variable == "redc_delivery" & value == 1 ~ "Jun 2023",
-                variable == "redc_delivery" & value == 2 ~ "Dec 2023"
+                variable == "redc_delivery" & value == 2 ~ "Dec 2023",
+                # NOTE: 2023-1 because this was an addendum delivery in Dec 2023
+                variable == "redc_delivery" & value == 3 ~ "Dec 2023-1"
             )
         )
 
