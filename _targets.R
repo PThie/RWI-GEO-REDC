@@ -379,9 +379,15 @@ targets_combine_cleaning <- rlang::list2(
         )
     ),
     tar_fst(
+        housing_data_fixed_missings,
+        fixing_remaining_missings(
+            housing_data = housing_data_fixed_new
+        )
+    ),
+    tar_fst(
         housing_data_translated,
         translating_variables(
-            housing_data = housing_data_fixed_new
+            housing_data = housing_data_fixed_missings
         )
     )
 )
@@ -565,6 +571,6 @@ rlang::list2(
     targets_suf_cleaning,
     targets_documentation,
     targets_export,
-    # targets_unit_testing,
+    targets_unit_testing,
     targets_pipeline_stats
 )
