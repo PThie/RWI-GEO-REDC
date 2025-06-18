@@ -346,6 +346,13 @@ targets_preparation <- rlang::list2(
     tar_fst(
         housing_data_fixed_bef_2306,
         fixing_bef_del_2306()
+    ),
+    #--------------------------------------------------
+    tar_fst(
+        housing_data_fixed_lmr_2306,
+        fixing_lmr_del_2306(
+            lmr_data = spatial_data_lmr
+        )
     )
 )
 
@@ -357,7 +364,10 @@ targets_append <- rlang::list2(
         housing_data_appended,
         appending_waves(
             deliveries = config_globals()[["deliveries"]],
-            dependency = finalized_data
+            dependencies = list(
+                finalized_data,
+                housing_data_fixed_lmr_2306
+            )
         )
     )
 )
