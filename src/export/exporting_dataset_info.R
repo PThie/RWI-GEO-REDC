@@ -21,7 +21,7 @@ exporting_dataset_info <- function(
     # time horizon
     housing_data <- housing_data |>
         dplyr::mutate(
-            year_mon = paste0(ejahr, "-" , emonat)
+            year_mon = zoo::as.yearmon(paste0(ejahr, "-" , emonat))
         )
 
     start_date <- min(housing_data$year_mon, na.rm = TRUE)
@@ -41,8 +41,8 @@ exporting_dataset_info <- function(
                 num_rows,
                 num_cols,
                 paste(col_names, collapse = ", "),
-                start_date,
-                end_date
+                paste0(start_date),
+                paste0(end_date)
             )
         )
     )
@@ -59,7 +59,7 @@ exporting_dataset_info <- function(
     gdata::write.fwf(
         infos,
         directory,
-        append = TRUE,
+        append = FALSE,
         rownames = FALSE,
         colnames = FALSE,
         quote = FALSE
