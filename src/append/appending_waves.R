@@ -1,13 +1,13 @@
 appending_waves <- function(
     deliveries = NA,
-    dependency = NA
+    dependencies = NA
 ) {
     #' @title Combining deliveries
     #' 
     #' @description This function combines all deliveries into one data set.
     #' 
     #' @param deliveries List with all deliveries
-    #' @param dependency Object from previous step to indicate dependency between
+    #' @param dependencies Objects from previous step to indicate dependency between
     #' functions/ steps
     #' 
     #' @return Dataframe, combined data set
@@ -18,14 +18,16 @@ appending_waves <- function(
     # NOTE: do something with dependency, so it actually matters that you have
     # passed it
 
-    targets::tar_assert_nonempty(
-        dependency,
-        msg = glue::glue(
-            "!!! ERROR: ",
-            "The dependency  is empty.",
-            " (Error code: aw#1)"
+    for (dep in dependencies) {
+        targets::tar_assert_nonempty(
+            dep,
+            msg = glue::glue(
+                "!!! ERROR: ",
+                "The dependency is empty.",
+                " (Error code: aw#1)"
+            )
         )
-    )
+    }
 
     #--------------------------------------------------
     # read all data
@@ -38,8 +40,8 @@ appending_waves <- function(
                     config_paths()[["data_path"]],
                     "processed",
                     paste0("Lieferung_", del),
-                    "fixed_bef",
-                    "clean_data_fixed_bef.parquet"
+                    "fixed_lmr",
+                    "clean_data_fixed_lmr.parquet"
                 )
             )
         } else {
