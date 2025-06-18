@@ -16,18 +16,24 @@ cleaning_missings_new_variables <- function(housing_data = NA) {
         "[0-9]+"
     )
 
+    # extract matching delivery number
+    del_num <- config_globals()[["deliveries_matching"]][[del]] 
+
     for (var in config_new_variables()[[del]]) {
-        # check that new variables are indeed always missing in the first delivery
-        first_delivery <- housing_data |>
-            dplyr::filter(redc_delivery == 1)
+        # extract 
+        # check that new variables are indeed always missing
+        delivery_data <- housing_data |>
+            dplyr::filter(
+                redc_delivery == del_num
+            )
 
         targets::tar_assert_true(
             all(
-                unique(first_delivery[[var]]) %in% c(NA)
+                unique(delivery_data[[var]]) %in% c(NA)
             ),
             msg = glue::glue(
                 "!!! WARNING: ",
-                "Variable {var} is not missing in first delivery.",
+                "Variable {var} is not missing in delivery.",
                 " (Error code: cmnv#1)"
             )
         )
@@ -37,7 +43,7 @@ cleaning_missings_new_variables <- function(housing_data = NA) {
         housing_data <- housing_data |>
             dplyr::mutate(
                 !!rlang::sym(var) := dplyr::case_when(
-                    is.na(!!rlang::sym(var)) & redc_delivery == 1 ~ as.character(
+                    is.na(!!rlang::sym(var)) & redc_delivery == del_num ~ as.character(
                         helpers_missing_values()[["not_used_anymore"]]
                     ),
                     TRUE ~ !!rlang::sym(var)
@@ -47,17 +53,17 @@ cleaning_missings_new_variables <- function(housing_data = NA) {
             housing_data <- housing_data |>
                 dplyr::mutate(
                     !!rlang::sym(var) := dplyr::case_when(
-                        is.na(!!rlang::sym(var)) & redc_delivery == 1 ~ helpers_missing_values()[["not_used_anymore"]],
+                        is.na(!!rlang::sym(var)) & redc_delivery == del_num ~ helpers_missing_values()[["not_used_anymore"]],
                         TRUE ~ !!rlang::sym(var)
                     )
                 )
         }
 
         # check that the transformation worked
-        num_missings <- length(which(is.na(first_delivery[[var]])))
+        num_missings <- length(which(is.na(delivery_data[[var]])))
         num_replaced <- length(which(
             housing_data |>
-                dplyr::filter(redc_delivery == 1) |>
+                dplyr::filter(redc_delivery == del_num) |>
                 dplyr::select(var) == helpers_missing_values()[["not_used_anymore"]]
         ))
 
