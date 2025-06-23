@@ -521,13 +521,23 @@ targets_unit_testing <- rlang::list2(
                     suf_data = suf_exported_data,
                     microm_data = microm_data_cleaned
                 )
+            ),
+            #--------------------------------------------------
+            # Test whether all NAs have been recoded
+            tar_fst(
+                missings_recoding_test,
+                testing_missings_recoding(
+                    suf_data = suf_exported_data,
+                    file_format = exported_file_formats
+                )
             )
         ),
         values = list(
             suf_exported_data = rlang::syms(helpers_target_names()[["suf_exported_data"]]),
             exported_file_formats = helpers_target_names()[["exported_file_formats"]],
             suf_compliance_test = rlang::syms(helpers_target_names()[["suf_compliance_test"]]),
-            suf_anonymization_test = rlang::syms(helpers_target_names()[["suf_anonymization_test"]])
+            suf_anonymization_test = rlang::syms(helpers_target_names()[["suf_anonymization_test"]]),
+            missings_recoding_test = rlang::syms(helpers_target_names()[["missings_recoding_test"]])
         )
     ),
     tar_target(
