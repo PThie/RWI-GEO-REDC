@@ -27,7 +27,7 @@ Data users shall cite the datasets properly with the respective DOIs. The DOIs o
 
 ## DOI
 
-- Repository for V3.0: [![DOI:10.5281/zenodo.15309094](http://img.shields.io/badge/DOI-10.5281/zenodo.15309094-048BC0.svg)](https://zenodo.org/account/settings/github/repository/PThie/RWI-GEO-REDC)
+- Repository for V3.0: [![DOI:10.5281/zenodo.15719891](http://img.shields.io/badge/DOI-10.5281/zenodo.15719891-048BC0.svg)](https://zenodo.org/account/settings/github/repository/PThie/RWI-GEO-REDC)
 - RWI-GEO-REDC V3 (SUF): [http://doi.org/10.7807/immo:redc:suf:v3](http://doi.org/10.7807/immo:redc:suf:v3)
 - RWI-GEO-REDC V3 (On-site): [http://doi.org/10.7807/immo:redc:v3](http://doi.org/10.7807/immo:redc:v3)
 
