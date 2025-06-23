@@ -28,14 +28,17 @@ testing_consistent_variables <- function(
 
     # variables that are in first delivery but not in new delivery
     for (col in column_infos_benchmark$columns) {
-        targets::tar_assert_true(
-            col %in% coltypes$columns,
-            msg = glue::glue(
-                "!!! WARNING: ",
-                "The variable {col} does not exist in the new data.",
-                " (Error code: tcv#1)"
+        if (!(col %in% config_fixed_variables_consistency()[["fixed_types_vars"]]) &
+            !(col %in% config_fixed_variables_consistency()[["fixed_names_vars"]])) {
+            targets::tar_assert_true(
+                col %in% coltypes$columns,
+                msg = glue::glue(
+                    "!!! WARNING: ",
+                    "The variable {col} does not exist in the new data.",
+                    " (Error code: tcv#1)"
+                )
             )
-        )
+        }
     }
     
     #--------------------------------------------------
@@ -106,6 +109,16 @@ testing_consistent_variables <- function(
     #--------------------------------------------------
     # checks that stops the pipeline
 
+    # print columns to check
+    if (length(fix_columns) > 0) {
+        cli::cli_alert_info(
+            "The following variable names need to be fixed: ",
+            paste(fix_columns, collapse = ", ")
+        )
+    } else {
+        cli::cli_alert_success("All variable names are consistent with the original data.")
+    }
+
     # test for consistent variables names
     targets::tar_assert_true(
         all(
@@ -117,6 +130,16 @@ testing_consistent_variables <- function(
             "(Error code: tcv#2)"
         )
     )
+
+    # print types to check
+    if (length(fix_types) > 0) {
+        cli::cli_alert_info(
+            "The following variable types need to be fixed: ",
+            paste(fix_types, collapse = ", ")
+        )
+    } else {
+        cli::cli_alert_success("All variable types are consistent with the original data.")
+    }
 
     # test for consistent variable types
     targets::tar_assert_true(

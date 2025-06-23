@@ -346,6 +346,13 @@ targets_preparation <- rlang::list2(
     tar_fst(
         housing_data_fixed_bef_2306,
         fixing_bef_del_2306()
+    ),
+    #--------------------------------------------------
+    tar_fst(
+        housing_data_fixed_lmr_2306,
+        fixing_lmr_del_2306(
+            lmr_data = spatial_data_lmr
+        )
     )
 )
 
@@ -357,7 +364,10 @@ targets_append <- rlang::list2(
         housing_data_appended,
         appending_waves(
             deliveries = config_globals()[["deliveries"]],
-            dependency = finalized_data
+            dependencies = list(
+                finalized_data,
+                housing_data_fixed_lmr_2306
+            )
         )
     )
 )
@@ -379,9 +389,15 @@ targets_combine_cleaning <- rlang::list2(
         )
     ),
     tar_fst(
+        housing_data_fixed_missings,
+        fixing_remaining_missings(
+            housing_data = housing_data_fixed_new
+        )
+    ),
+    tar_fst(
         housing_data_translated,
         translating_variables(
-            housing_data = housing_data_fixed_new
+            housing_data = housing_data_fixed_missings
         )
     )
 )
@@ -482,7 +498,10 @@ targets_unit_testing <- rlang::list2(
                 reading_exported_data(
                     data_path = !!.x,
                     file_format = exported_file_formats,
-                    dependency = housing_data_exported
+                    dependencies = list(
+                        housing_data_org,
+                        housing_data_exported
+                    )
                 )
             ),
             #--------------------------------------------------
@@ -502,13 +521,23 @@ targets_unit_testing <- rlang::list2(
                     suf_data = suf_exported_data,
                     microm_data = microm_data_cleaned
                 )
+            ),
+            #--------------------------------------------------
+            # Test whether all NAs have been recoded
+            tar_fst(
+                missings_recoding_test,
+                testing_missings_recoding(
+                    suf_data = suf_exported_data,
+                    file_format = exported_file_formats
+                )
             )
         ),
         values = list(
             suf_exported_data = rlang::syms(helpers_target_names()[["suf_exported_data"]]),
             exported_file_formats = helpers_target_names()[["exported_file_formats"]],
             suf_compliance_test = rlang::syms(helpers_target_names()[["suf_compliance_test"]]),
-            suf_anonymization_test = rlang::syms(helpers_target_names()[["suf_anonymization_test"]])
+            suf_anonymization_test = rlang::syms(helpers_target_names()[["suf_anonymization_test"]]),
+            missings_recoding_test = rlang::syms(helpers_target_names()[["missings_recoding_test"]])
         )
     ),
     tar_target(

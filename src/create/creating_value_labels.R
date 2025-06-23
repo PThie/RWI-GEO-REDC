@@ -262,8 +262,6 @@ creating_value_labels <- function(
                 variable == "provider" & value == 7 ~ "House construction",
                 variable == "provider" & value == 8 ~ "Relocation",
                 #--------------------------------------------------
-                variable == "redc_delivery" & value == 1 ~ "Jun 2023",
-                #--------------------------------------------------
                 variable == "security_deposit_type" & value == 1 ~ "Cold rent",
                 variable == "security_deposit_type" & value == 2 ~ "Warm rent",
                 variable == "security_deposit_type" & value == 3 ~ "Other rent (cold or warm)",
@@ -280,9 +278,10 @@ creating_value_labels <- function(
                 variable == "warm_water_cons_included_energy_cons" & value == 0 ~ "No",
                 variable == "warm_water_cons_included_energy_cons" & value == 1 ~ "Yes",
                 #--------------------------------------------------
-                # TODO NEW WAVE: Update delivery numbers
-                variable == "redc_delivery" & value == 1 ~ "Jun 2023",
-                variable == "redc_delivery" & value == 2 ~ "Dec 2023"
+                variable == "redc_delivery" ~ dplyr::recode(
+                    as.character(value),
+                    !!!config_globals()[["deliveries_labels"]]
+                )
             )
         )
 

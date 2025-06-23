@@ -40,6 +40,9 @@ helpers_target_names <- function() {
         ),
         "suf_anonymization_test" = glue::glue(
             "suf_anonymization_test_{exported_file_formats}"
+        ),
+        "missings_recoding_test" = glue::glue(
+            "missings_recoding_test_{exported_file_formats}"
         )
     )
     
