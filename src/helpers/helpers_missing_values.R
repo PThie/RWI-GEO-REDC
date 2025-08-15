@@ -11,7 +11,7 @@ helpers_missing_values <- function() {
 
     missings <- list(
         "implausible" = -5,
-        "not_used_anymore" = -6,
+        "not_used_anymore" = -6, # "Not available for this delivery"
         "not_specified" = -7,
         "other" = -9,
         "censored" = -11,
