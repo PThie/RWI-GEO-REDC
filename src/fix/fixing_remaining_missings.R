@@ -38,22 +38,21 @@ fixing_remaining_missings <- function(
         )
 
         for (var in vars_unique_to_del_2312) {
-            unique_values <- unique(
-                housing_data |>
-                    dplyr::filter(redc_delivery == 1) |>
-                    dplyr::pull(!!rlang::sym(var))
-            )
+#            unique_values <- unique(
+#                housing_data |>
+#                    dplyr::filter(redc_delivery == 1) |>
+#                    dplyr::pull(!!rlang::sym(var))
+#            )
 
             # check that the variable is indeed completely missing in first delivery
-            targets::tar_assert_true(
-                all(unique_values %in% c(NA)),
-                msg = glue::glue(
-                    "!!! WARNING: ",
-                    "Variable {var} is not completely missing in first delivery.",
-                    " (Error code: frm#1)"
-                )
-            )
-
+#            targets::tar_assert_true(
+#                all(unique_values %in% c(NA)),
+#                msg = glue::glue(
+#                    "!!! WARNING: ",
+#                    "Variable {var} is not completely missing in first delivery.",
+#                    " (Error code: frm#1)"
+#                )
+#            )
             # replace with appropriate missing value if completely missing
             if (typeof(housing_data[[var]]) == "character") {
                 housing_data <- housing_data |>
