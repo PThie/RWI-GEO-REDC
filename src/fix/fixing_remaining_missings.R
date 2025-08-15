@@ -56,22 +56,31 @@ fixing_remaining_missings <- function(
             # replace with appropriate missing value if completely missing
             if (typeof(housing_data[[var]]) == "character") {
                 housing_data <- housing_data |>
+                    dplyr::group_by(redc_delivery) |>
                     dplyr::mutate(
                         !!rlang::sym(var) := dplyr::case_when(
-                            is.na(!!rlang::sym(var)) & redc_delivery == 1 ~ as.character(
-                                helpers_missing_values()[["not_used_anymore"]]
+                            # Case 1: Entire year is NA → replace all NA with not_used_anymore
+                            all(is.na(!!rlang::sym(var))) ~ as.character(
+                            helpers_missing_values()[["not_used_anymore"]]
+                            ),
+                            # Case 2: Only some NA → replace those NA with not_specified
+                            is.na(!!rlang::sym(var)) ~ as.character(
+                            helpers_missing_values()[["not_specified"]]
                             ),
                             TRUE ~ !!rlang::sym(var)
                         )
                     )
             } else {
                 housing_data <- housing_data |>
+                    dplyr::group_by(redc_delivery) |>
                     dplyr::mutate(
                         !!rlang::sym(var) := dplyr::case_when(
-                            is.na(!!rlang::sym(var)) & redc_delivery == 1 ~ helpers_missing_values()[["not_used_anymore"]],
+                            all(is.na(!!rlang::sym(var))) ~ helpers_missing_values()[["not_used_anymore"]],
+                            is.na(!!rlang::sym(var)) ~ helpers_missing_values()[["not_specified"]],
                             TRUE ~ !!rlang::sym(var)
                         )
-                    )
+                    )|>
+                dplyr::ungroup()
             }
         }
     }
