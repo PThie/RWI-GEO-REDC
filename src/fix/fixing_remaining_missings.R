@@ -59,7 +59,7 @@ fixing_remaining_missings <- function(
                     dplyr::group_by(redc_delivery) |>
                     dplyr::mutate(
                         !!rlang::sym(var) := dplyr::case_when(
-                            # Case 1: Entire year is NA → replace all NA with not_used_anymore
+                            # Case 1: Entire year is NA → replace all NA if not available
                             all(is.na(!!rlang::sym(var))) ~ as.character(
                             helpers_missing_values()[["not_used_anymore"]]
                             ),
