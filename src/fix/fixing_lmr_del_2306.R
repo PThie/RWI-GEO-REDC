@@ -79,10 +79,22 @@ fixing_lmr_del_2306 <- function(
                 "clean_data_fixed_lmr.parquet"
             )
         )
-    
-        #--------------------------------------------------
-        # return
-        
-        return(processed_data_prep)
+    } else {
+        # read previously fixed LMR data from parquet file
+        processed_data_prep <- arrow::read_parquet(
+            file.path(
+                config_paths()[["data_path"]],
+                "processed",
+                "Lieferung_2306",
+                "fixed_lmr",
+                "clean_data_fixed_lmr.parquet"
+            )
+        )
     }
+    
+
+    #--------------------------------------------------
+    # return
+    return(processed_data_prep)
 }
+

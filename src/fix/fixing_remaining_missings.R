@@ -14,7 +14,7 @@ fixing_remaining_missings <- function(
     #--------------------------------------------------
     # handle delivery specific missing values
 
-    if (config_globals()[["current_delivery"]] == "Lieferung_23121") {
+    if (config_globals()[["current_delivery"]] %in% c("Lieferung_23121", "Lieferung_2406")) {
         #--------------------------------------------------
         # handle variables that are not always present
         # NOTE: these variables are introduced in the second delivery (delivery 2312)
@@ -38,41 +38,49 @@ fixing_remaining_missings <- function(
         )
 
         for (var in vars_unique_to_del_2312) {
-            unique_values <- unique(
-                housing_data |>
-                    dplyr::filter(redc_delivery == 1) |>
-                    dplyr::pull(!!rlang::sym(var))
-            )
+#            unique_values <- unique(
+#                housing_data |>
+#                    dplyr::filter(redc_delivery == 1) |>
+#                    dplyr::pull(!!rlang::sym(var))
+#            )
 
             # check that the variable is indeed completely missing in first delivery
-            targets::tar_assert_true(
-                all(unique_values %in% c(NA)),
-                msg = glue::glue(
-                    "!!! WARNING: ",
-                    "Variable {var} is not completely missing in first delivery.",
-                    " (Error code: frm#1)"
-                )
-            )
-
+#            targets::tar_assert_true(
+#                all(unique_values %in% c(NA)),
+#                msg = glue::glue(
+#                    "!!! WARNING: ",
+#                    "Variable {var} is not completely missing in first delivery.",
+#                    " (Error code: frm#1)"
+#                )
+#            )
             # replace with appropriate missing value if completely missing
             if (typeof(housing_data[[var]]) == "character") {
                 housing_data <- housing_data |>
+                    dplyr::group_by(redc_delivery) |>
                     dplyr::mutate(
                         !!rlang::sym(var) := dplyr::case_when(
-                            is.na(!!rlang::sym(var)) & redc_delivery == 1 ~ as.character(
-                                helpers_missing_values()[["not_used_anymore"]]
+                            # Case 1: Entire year is NA → replace all NA if not available
+                            all(is.na(!!rlang::sym(var))) ~ as.character(
+                            helpers_missing_values()[["not_used_anymore"]]
+                            ),
+                            # Case 2: Only some NA → replace those NA with not_specified
+                            is.na(!!rlang::sym(var)) ~ as.character(
+                            helpers_missing_values()[["not_specified"]]
                             ),
                             TRUE ~ !!rlang::sym(var)
                         )
                     )
             } else {
                 housing_data <- housing_data |>
+                    dplyr::group_by(redc_delivery) |>
                     dplyr::mutate(
                         !!rlang::sym(var) := dplyr::case_when(
-                            is.na(!!rlang::sym(var)) & redc_delivery == 1 ~ helpers_missing_values()[["not_used_anymore"]],
+                            all(is.na(!!rlang::sym(var))) ~ helpers_missing_values()[["not_used_anymore"]],
+                            is.na(!!rlang::sym(var)) ~ helpers_missing_values()[["not_specified"]],
                             TRUE ~ !!rlang::sym(var)
                         )
-                    )
+                    )|>
+                dplyr::ungroup()
             }
         }
     }
