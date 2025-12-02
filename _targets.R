@@ -563,6 +563,20 @@ targets_unit_testing <- rlang::list2(
 )
 
 #--------------------------------------------------
+# special data requests
+
+targets_special_requests <- rlang::list2(
+    #--------------------------------------------------
+    # Special request for Tagesspiegel
+    tar_qs(
+        tagesspiegel_berlin_data,
+        sampling_tagesspiegel_berlin_data(
+            housing_data = housing_data_translated
+        )
+    )
+)
+
+#--------------------------------------------------
 # pipeline stats
 
 targets_pipeline_stats <- rlang::list2(
@@ -592,5 +606,6 @@ rlang::list2(
     targets_documentation,
     targets_export,
     targets_unit_testing,
+    targets_special_requests,
     targets_pipeline_stats
 )
