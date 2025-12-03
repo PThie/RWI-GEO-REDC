@@ -573,6 +573,12 @@ targets_special_requests <- rlang::list2(
         sampling_tagesspiegel_berlin_data(
             housing_data = housing_data_translated
         )
+    ),
+    tar_fst(
+        obs_tagesspiegel_berlin,
+        calculating_obs_tagesspiegel(
+            housing_data = tagesspiegel_berlin_data
+        )
     )
 )
 
