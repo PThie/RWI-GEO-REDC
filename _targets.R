@@ -592,6 +592,5 @@ rlang::list2(
     targets_documentation,
     targets_export,
     targets_unit_testing,
-    targets_special_requests,
     targets_pipeline_stats
 )
