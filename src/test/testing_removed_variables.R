@@ -115,7 +115,7 @@ testing_removed_variables <- function(
                 length(difference_not_checked) == 0,
                 msg = glue::glue(
                     "!!! ERROR: ",
-                    "The following variables have been removed and different from
+                    "The following variables have been removed and are different from
                     previous cleaning steps: {glue::glue_collapse(difference_not_checked, sep = ', ')}",
                     " (Error code: trv#2)"
                 )

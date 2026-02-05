@@ -13,8 +13,11 @@ fixing_remaining_missings <- function(
 
     #--------------------------------------------------
     # handle delivery specific missing values
-
-    if (config_globals()[["current_delivery"]] %in% c("Lieferung_23121", "Lieferung_2406", "Lieferung_2507")) {
+    # TODO: move to config
+    if (config_globals()[["current_delivery"]] %in% c(
+        "Lieferung_23121", "Lieferung_2406",
+        "Lieferung_2507", "Lieferung_2601"
+    )) {
         #--------------------------------------------------
         # handle variables that are not always present
         # NOTE: these variables are introduced in the second delivery (delivery 2312)

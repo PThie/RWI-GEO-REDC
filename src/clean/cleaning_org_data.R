@@ -14,9 +14,6 @@ cleaning_org_data <- function(
     #--------------------------------------------------
     # cleaning
     
-    # make all names lowercase
-    names(housing_data) <- tolower(names(housing_data))
-
     # apply cleaning steps
     housing_data_prep <- housing_data |>
         dplyr::mutate(
@@ -1238,7 +1235,7 @@ cleaning_org_data <- function(
 
     # numeric columns
     num_cols <- c(
-        "grundstuecksflaeche", "nutzflaeche", "wohnflaeche", "zimmeranzahl",
+        "grundstuecksflaeche", "nutzflaeche",
         "kaufpreis", "mietekalt", "nebenkosten", "geox", "geoy", "miete_proqm",                                 
         "teilbar_ab", "nebenkosten_proqm", "ev_kennwert",
         "hits", "click_schnellkontakte", "liste_show", "liste_match",

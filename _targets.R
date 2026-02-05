@@ -165,17 +165,16 @@ targets_files <- rlang::list2(
 targets_reading <- rlang::list2(
     #--------------------------------------------------
     # housing data
-    tar_file_read(
+    tar_fst(
         housing_data_org,
-        file.path(
-            config_paths()[["data_path"]],
-            "original",
-            config_globals()[["current_delivery"]],
-            "commercial_data_all.csv"
-        ),
         suppressWarnings(
             reading_org_data(
-                !!.x
+                redc_raw_file = file.path(
+                    config_paths()[["data_path"]],
+                    "original",
+                    config_globals()[["current_delivery"]],
+                    "commercial_data_all.csv"
+                )
             )
         )
     ),
@@ -233,6 +232,8 @@ targets_preparation <- rlang::list2(
     ),
     #--------------------------------------------------
     # preparing housing data
+    # NOTE: export is only triggered for the first delivery (2306)
+    # Otherwise, the columns from the first delivery are just read back in
     tar_fst(
         column_infos_benchmark,
         exporting_column_infos(
@@ -319,7 +320,7 @@ targets_preparation <- rlang::list2(
             spatial_data_municipality = spatial_data_municipality
         )
     ),
-    # # combine both datasets again
+    # combine both datasets again
     tar_fst(
         housing_data_coordinates_combined,
         appending_housing_with_without_coordinates(
@@ -388,6 +389,7 @@ targets_combine_cleaning <- rlang::list2(
             housing_data = housing_data_append_cleaned
         )
     ),
+    # TODO: in function
     tar_fst(
         housing_data_fixed_missings,
         fixing_remaining_missings(
