@@ -2,11 +2,11 @@
 
 This repository shows the detailed preparation and generation of the RWI-GEO-REDC dataset.
 
-## Abstract Data Description (V6)
+## Abstract Data Description (V7)
 
 The FDZ Ruhr provides a dataset on commercial real estate advertisements in Germany, drawing from information obtained from the internet platform ImmoScout24. The dataset encompasses a wide range of real estate types, including but not limited to offices, retail, and hotels. It is important to note that the data are available for scientific research purposes only. The provided dataset offers detailed regional information and a comprehensive set of characteristics. This data report offers a concise overview of the data, its limitations, and specific details. The data report is intended for (potential) users of the data as support for their data preparation. 
 
-The current version RWI-GEO-REDC V6, which covers data from 01/2010 to 06/2026. Note that the years 2021 and 2022 are currently not present in the data.
+The current version RWI-GEO-REDC V7, which covers data from 01/2010 to 06/2025.
 
 ## Access
 
@@ -16,20 +16,20 @@ Data access is provided by the Research Data Centre Ruhr at the RWI – Leibniz-
 
 Data users shall cite the datasets properly with the respective DOIs. The DOIs of the current version (V6) of the datesets are: 
 
-**Scientific Use File (SUF):** [http://doi.org/10.7807/immo:redc:suf:V6](http://doi.org/10.7807/immo:redc:suf:V6)
+**Scientific Use File (SUF):** [http://doi.org/10.7807/immo:redc:suf:V7](http://doi.org/10.7807/immo:redc:suf:V7)
 
-**On-site dataset:** [http://doi.org/10.7807/immo:redc:V6](http://doi.org/10.7807/immo:redc:V6)
+**On-site dataset:** [http://doi.org/10.7807/immo:redc:V7](http://doi.org/10.7807/immo:redc:V7)
 
 ## More Information
 
 - [General information on RWI-GEO-RED/C/X](https://www.rwi-essen.de/en/research-advice/further/research-data-center-ruhr-fdz/data-sets/rwi-geo-red/x-real-estate-data-and-price-indices)
-- [Data report RWI-GEO-REDC V6](https://www.rwi-essen.de/fileadmin/user_upload/RWI/FDZ/FDZ_Datensatzbeschreibung_REDC_V6.pdf). Please cite the data report as: Heuer and Thiel (2026), FDZ Data Description: Commercial Real-Estate Data for Germany (RWI-GEO-REDC V6) - Commercial advertisements on the Internet Platform ImmoScout24 01/2010-06/2025, RWI Projektberichte, Essen.
+- [Data report RWI-GEO-REDC V7](https://www.rwi-essen.de/fileadmin/user_upload/RWI/FDZ/FDZ_Datensatzbeschreibung_REDC_V7.pdf). Please cite the data report as: Heuer and Thiel (2026), FDZ Data Description: Commercial Real-Estate Data for Germany (RWI-GEO-REDC V7) - Commercial advertisements on the Internet Platform ImmoScout24 01/2010-06/2025, RWI Projektberichte, Essen.
 
 ## DOI
 
-- Repository for V6.0: [![DOI:10.5281/zenodo.18454953](http://img.shields.io/badge/DOI-10.5281/zenodo.16910332-048BC0.svg)](https://zenodo.org/account/settings/github/repository/PThie/RWI-GEO-REDC)
-- RWI-GEO-REDC V6 (SUF): [http://doi.org/10.7807/immo:redc:suf:V6](http://doi.org/10.7807/immo:redc:suf:V6)
-- RWI-GEO-REDC V6 (On-site): [http://doi.org/10.7807/immo:redc:V6](http://doi.org/10.7807/immo:redc:V6)
+- Repository for V7.0: [![DOI:10.5281/zenodo.18454953](http://img.shields.io/badge/DOI-10.5281/zenodo.16910332-048BC0.svg)](https://zenodo.org/account/settings/github/repository/PThie/RWI-GEO-REDC)
+- RWI-GEO-REDC V7 (SUF): [http://doi.org/10.7807/immo:redc:suf:V7](http://doi.org/10.7807/immo:redc:suf:V7)
+- RWI-GEO-REDC V7 (On-site): [http://doi.org/10.7807/immo:redc:V7](http://doi.org/10.7807/immo:redc:V7)
 
 ## Contact Person
 
