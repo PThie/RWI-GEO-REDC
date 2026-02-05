@@ -389,6 +389,7 @@ targets_combine_cleaning <- rlang::list2(
             housing_data = housing_data_append_cleaned
         )
     ),
+    # TODO: in function
     tar_fst(
         housing_data_fixed_missings,
         fixing_remaining_missings(
