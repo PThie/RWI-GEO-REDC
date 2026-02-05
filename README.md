@@ -14,7 +14,7 @@ The data are available to researchers for non-commercial use. There are two vers
 
 Data access is provided by the Research Data Centre Ruhr at the RWI – Leibniz-Institute for Economic Research (FDZ Ruhr). The data can be accessed at [https://www.rwi-essen.de/en/research-advice/further/research-data-center-ruhr-fdz/data-access](https://www.rwi-essen.de/en/research-advice/further/research-data-center-ruhr-fdz/data-access). The application form includes a brief description and title of the project, potential cooperation, information on the applying department, expected duration of data usage as well as further participants in the project. 
 
-Data users shall cite the datasets properly with the respective DOIs. The DOIs of the current version (V6) of the datesets are: 
+Data users shall cite the datasets properly with the respective DOIs. The DOIs of the current version (V7) of the datesets are: 
 
 **Scientific Use File (SUF):** [http://doi.org/10.7807/immo:redc:suf:V7](http://doi.org/10.7807/immo:redc:suf:V7)
 
@@ -27,7 +27,7 @@ Data users shall cite the datasets properly with the respective DOIs. The DOIs o
 
 ## DOI
 
-- Repository for V7.0: [![DOI:10.5281/zenodo.18454953](http://img.shields.io/badge/DOI-10.5281/zenodo.16910332-048BC0.svg)](https://zenodo.org/account/settings/github/repository/PThie/RWI-GEO-REDC)
+- Repository for V7.0: [![DOI:10.5281/zenodo.18496226](http://img.shields.io/badge/DOI-10.5281/zenodo.18496226-048BC0.svg)](https://zenodo.org/account/settings/github/repository/PThie/RWI-GEO-REDC)
 - RWI-GEO-REDC V7 (SUF): [http://doi.org/10.7807/immo:redc:suf:V7](http://doi.org/10.7807/immo:redc:suf:V7)
 - RWI-GEO-REDC V7 (On-site): [http://doi.org/10.7807/immo:redc:V7](http://doi.org/10.7807/immo:redc:V7)
 
