@@ -13,6 +13,8 @@ helpers_deleted_variables <- function() {
     # TODO NEW WAVE: Update variables to be removed (if necessary)
     
     del_vars <- c(
+        "wohnflaeche",
+        "zimmeranzahl",
         "mieteinnahmenpromonat",
         "schlafzimmer",
         "badezimmer",
