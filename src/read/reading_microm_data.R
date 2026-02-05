@@ -9,11 +9,14 @@ reading_microm_data <- function() {
     #--------------------------------------------------
     # read data
 
-    microm_data <- haven::read_dta(
+    microm_data <- data.table::fread(
         file.path(
             config_paths()[["microm_data_path"]],
             config_globals()[["microm_data_version"]],
-            "microm_panel_05-22.dta"
+            paste0(
+                config_globals()[["microm_file_name"]],
+                ".csv"
+            )
         )
     )
 
