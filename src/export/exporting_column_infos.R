@@ -53,6 +53,12 @@ exporting_column_infos <- function(
     }
 
     #--------------------------------------------------
+    # set column names to lower cases
+
+    coltypes <- coltypes |>
+        dplyr::mutate(columns = tolower(columns))
+
+    #--------------------------------------------------
     # return
 
     return(coltypes)

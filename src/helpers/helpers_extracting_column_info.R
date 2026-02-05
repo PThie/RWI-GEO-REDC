@@ -28,11 +28,11 @@ helpers_extracting_column_info <- function(
         dplyr::relocate(columns) |>
         # handle that Einstelldatum has two types
         dplyr::filter(
-            columns != "Einstelldatum2"
+            columns != "einstelldatum2" & columns_types != "Date"
         ) |>
         dplyr::mutate(
             columns = dplyr::case_when(
-                columns == "Einstelldatum1" ~ "Einstelldatum",
+                columns == "einstelldatum1" ~ "einstelldatum",
                 TRUE ~ columns
             )
         )

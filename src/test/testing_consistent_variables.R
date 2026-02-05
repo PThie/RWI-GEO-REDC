@@ -40,7 +40,7 @@ testing_consistent_variables <- function(
             )
         }
     }
-    
+
     #--------------------------------------------------
     # test for differences in names
 
@@ -71,7 +71,7 @@ testing_consistent_variables <- function(
         # NOTE: ignore Energieeffizienz_Klasse because this is a new variable
         # which carries the same information as Energieeffizienzklasse but is
         # written differently
-        if (col != "Energieeffizienz_Klasse") {
+        if (col != "energieeffizienz_klasse") {
             # ignore country ID because this is equal to countrycode on later waves
             # (country ID will not be found in comparison with first delivery)
             # NOTE: difference in naming is already checked above and will be fixed
@@ -94,7 +94,8 @@ testing_consistent_variables <- function(
                             cli::cli_alert_danger(
                                 cli::col_red(
                                     "The following variable has a different type than in the original data: ",
-                                    col
+                                    col,
+                                    ". Was: ", coltype_current, ", Should be: ", coltype_benchmark
                                 )
                             )
                             # store the variable that needs to be fixed
